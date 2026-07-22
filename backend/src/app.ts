@@ -51,7 +51,7 @@ app.use(express.json());
 app.use(cors());
 app.use(morgan('dev'));
 
-// Límite general por IP. Las rutas sensibles agregan límites más estrictos.
+// Límite general por IP. Las rutas sensibles agregan límites más estrictos
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
     max: 1000,
