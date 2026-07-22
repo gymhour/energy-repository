@@ -1,6 +1,6 @@
 {
-  "short_name": "GymHour",
-  "name": "GymHour",
+  "short_name": "Energy Gym",
+  "name": "Energy Gym",
   "icons": [
     {
       "src": "/logo_192.png",
@@ -28,6 +28,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#DB4632",
+  "theme_color": "#30A020",
   "background_color": "#ffffff"
 }

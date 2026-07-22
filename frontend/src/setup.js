@@ -10,8 +10,8 @@
 //   - `logo`: version para fondo OSCURO (dark theme)
 //   - `logoLight`: version para fondo CLARO (light theme)
 // Si el cliente solo tiene una variante, apuntar ambas al mismo archivo.
-import logoDark from './assets/gymhour/logo_gymhour_text_right.png';
-import logoLight from './assets/gymhour/logo_gymhour_black_text_right.png';
+import logoDark from './assets/gymhour/energy_logo_dark.png';   // tema oscuro
+import logoLight from './assets/gymhour/energy_logo_white.png'; // tema claro
 
 const CLIENT_SETUP = {
   // URL publica de la API del cliente.
@@ -20,30 +20,31 @@ const CLIENT_SETUP = {
   apiUrl: process.env.REACT_APP_API_URL || 'http://localhost:3000',
 
   branding: {
-    name: 'GymHour',
-    logoAlt: 'GymHour',
+    name: 'Energy Gym',
+    logoAlt: 'Energy Gym',
     // Logos (login + sidebar). Se elige la variante segun el tema activo.
     logo: logoDark,
     logoLight: logoLight,
     // Colores principales. Se inyectan como CSS variables al iniciar la app.
     theme: {
-      primaryColor: '#DB4632',
-      primaryColorHover: '#E35D4B',
-      backgroundHoverColor: '#DB463230',
+      primaryColor: '#30A020',
+      primaryColorHover: '#45B33C',
+      backgroundHoverColor: '#30A02030',
     },
   },
 
   payment: {
+    // TODO(energy_gym): completar con los datos reales del cliente.
     // Nombre que se muestra en la pantalla de Cuotas
-    accountHolder: 'WELLNESS GYM',
-    alias: 'zeus.training.club',
-    cbu: '0000003100051208535818',
+    accountHolder: 'ENERGY GYM',
+    alias: 'COMPLETAR_ALIAS',
+    cbu: 'COMPLETAR_CBU',
     cuil: '',
     whatsapp: {
       // WhatsApp con codigo de pais, sin el "+"
-      phoneNumber: '5492216783402',
+      phoneNumber: 'COMPLETAR_TELEFONO',
       // Mensaje prearmado para enviar el comprobante
-      message: 'Hola Wellness Gym! Les comparto el comprobante de pago de este mes:',
+      message: 'Hola Energy Gym! Les comparto el comprobante de pago de este mes:',
     },
   },
 };
