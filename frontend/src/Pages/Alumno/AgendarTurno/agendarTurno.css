@@ -1,0 +1,414 @@
+@import '../../../variables.css';
+
+.agendar-turno-title {
+    width: min(100%, 1120px);
+    margin-bottom: 28px;
+    margin-left: auto;
+    margin-right: auto;
+    color: var(--text-color);
+    font-weight: 500;
+    text-align: left;
+}
+
+.agendar-turno-ctn {
+    width: min(100%, 1120px);
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    grid-template-columns: minmax(260px, 0.9fr) minmax(360px, 1.45fr);
+    gap: 28px;
+    align-items: start;
+}
+
+.agendar-turno-ctn :is(strong, b),
+.agendar-turno-ctn .primary-button {
+    font-weight: 500;
+}
+
+.agendar-step,
+.agendar-resumen {
+    color: var(--text-color);
+}
+
+.agendar-step {
+    padding: 0;
+}
+
+.agendar-step-clases {
+    min-width: 0;
+}
+
+.agendar-step-turnos {
+    min-width: 0;
+}
+
+.agendar-step-turnos.is-disabled {
+    opacity: 0.78;
+}
+
+.agendar-step-header,
+.agendar-slots-heading,
+.agendar-resumen {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.agendar-step-header {
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.agendar-step-header h3,
+.agendar-slots-heading strong {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+.agendar-step-header svg,
+.agendar-slots-heading svg {
+    color: var(--primary-color);
+    flex: 0 0 auto;
+}
+
+.agendar-step-kicker,
+.agendar-slots-heading span,
+.agendar-resumen span {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-color-distinct);
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.agendar-clases-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    max-height: 560px;
+    overflow: auto;
+    padding-right: 2px;
+}
+
+.agendar-clase-card,
+.agendar-day-card,
+.agendar-slot-card {
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.agendar-day-card:hover,
+.agendar-slot-card:not(:disabled):hover {
+    border-color: color-mix(in srgb, var(--primary-color) 55%, var(--border-color));
+    background: var(--background-hover-color);
+    transform: translateY(-1px);
+}
+
+.agendar-clase-card.is-selected,
+.agendar-day-card.is-selected,
+.agendar-slot-card.is-selected {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 9%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+.agendar-clase-card {
+    min-height: 72px;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    grid-template-areas:
+        "icon title"
+        "icon meta";
+    column-gap: 12px;
+    padding: 12px;
+    text-align: left;
+}
+
+.agendar-clase-icon {
+    grid-area: icon;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: var(--background-color-distinct);
+    color: var(--primary-color);
+}
+
+.agendar-clase-card strong {
+    grid-area: title;
+    align-self: end;
+    font-size: 0.98rem;
+    font-weight: 500;
+    line-height: 1.25;
+}
+
+.agendar-clase-card small {
+    grid-area: meta;
+    align-self: start;
+    margin-top: 5px;
+    color: var(--text-color-distinct);
+    font-size: 0.82rem;
+    font-weight: 400;
+}
+
+.agendar-empty-state {
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
+    text-align: center;
+    color: var(--text-color-distinct);
+}
+
+.agendar-empty-state p {
+    max-width: 340px;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.agendar-empty-state-compact {
+    min-height: 132px;
+    padding: 18px;
+}
+
+.agendar-days-strip {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(128px, 1fr);
+    gap: 8px;
+    overflow-x: auto;
+    padding: 1px 1px 12px;
+}
+
+.agendar-day-card {
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 12px;
+    text-align: left;
+}
+
+.agendar-day-card span {
+    color: var(--text-color-distinct);
+    font-size: 0.83rem;
+    text-transform: capitalize;
+}
+
+.agendar-day-card strong {
+    font-size: 1.38rem;
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.agendar-day-card small {
+    color: var(--primary-color);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.agendar-slots-panel {
+    margin-top: 2px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 14px;
+}
+
+.agendar-slots-heading {
+    margin-bottom: 12px;
+}
+
+.agendar-slots-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.agendar-slot-card {
+    min-height: 124px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    text-align: left;
+}
+
+.agendar-slot-card:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.agendar-slot-time {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    grid-template-areas:
+        "icon hour"
+        "icon end";
+    column-gap: 8px;
+}
+
+.agendar-slot-time svg {
+    grid-area: icon;
+    color: var(--primary-color);
+    margin-top: 2px;
+}
+
+.agendar-slot-time strong {
+    grid-area: hour;
+    font-size: 1.35rem;
+    font-weight: 500;
+    line-height: 1.1;
+}
+
+.agendar-slot-time span {
+    grid-area: end;
+    margin-top: 4px;
+    color: var(--text-color-distinct);
+    font-size: 0.82rem;
+}
+
+.agendar-slot-occupancy {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.agendar-slot-occupancy-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-color-distinct);
+    font-size: 0.82rem;
+}
+
+.agendar-slot-occupancy-top span {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.agendar-slot-occupancy-top small {
+    white-space: nowrap;
+}
+
+.agendar-slot-bar {
+    width: 100%;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--background-color-distinct);
+}
+
+.agendar-slot-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-color-hover));
+}
+
+.agendar-slot-card.is-full .agendar-slot-bar span {
+    background: var(--medium-grey);
+}
+
+.agendar-resumen {
+    grid-column: 1 / -1;
+    position: sticky;
+    bottom: 14px;
+    z-index: 1;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--border-color);
+    background: var(--background-color);
+}
+
+.agendar-resumen div {
+    min-width: 0;
+}
+
+.agendar-resumen strong {
+    display: block;
+    color: var(--text-color);
+    font-size: 0.98rem;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+.agendar-resumen small {
+    display: block;
+    margin-top: 4px;
+    color: var(--success-text-color);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.agendar-resumen button {
+    flex: 0 0 auto;
+}
+
+@media screen and (max-width: 980px) {
+    .agendar-turno-ctn {
+        grid-template-columns: 1fr;
+        gap: 26px;
+    }
+
+    .agendar-clases-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: none;
+    }
+}
+
+@media screen and (max-width: 620px) {
+    .agendar-turno-title {
+        text-align: center;
+    }
+
+    .agendar-step {
+        padding: 0;
+    }
+
+    .agendar-turno-ctn {
+        gap: 24px;
+    }
+
+    .agendar-step-header {
+        align-items: flex-start;
+    }
+
+    .agendar-clases-grid,
+    .agendar-slots-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .agendar-days-strip {
+        grid-auto-columns: minmax(116px, 48%);
+    }
+
+    .agendar-resumen {
+        align-items: stretch;
+        flex-direction: column;
+        bottom: 0;
+        padding: 12px 0 0;
+    }
+
+    .agendar-resumen button {
+        width: 100%;
+    }
+}

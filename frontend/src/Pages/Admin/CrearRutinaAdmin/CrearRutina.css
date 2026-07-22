@@ -1,0 +1,62 @@
+.crear-rutina-step-1-form {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    gap: 16px;
+}
+
+.crear-rutina-step-2-form {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: start;
+    align-items: start;
+}
+
+.sets-reps-ctn {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rondas-ctn {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cantidad-rondas-descanso {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 6px;
+}
+
+.emom-ctn {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cantidad-emom-ctn {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.amrap-ctn {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cantidad-amrap-ctn {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 6px;
+}

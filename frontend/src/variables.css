@@ -1,0 +1,109 @@
+/* variables.css */
+:root {
+    --primary-color: #DB4632;
+    --primary-color-hover: #E35D4B;
+    --background-hover-color: #DB463230;
+    --medium-grey: #8d8d8d;
+    --light-grey: #ffffff36;
+    --admin-kpi-card-gradient: linear-gradient(180deg, rgba(16, 16, 16, 0.035) 0%, rgba(16, 16, 16, 0.015) 46%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* ——— CAMBIAR COLORES AQUÍ (Descomentar para probar) ——— */
+
+/* OPCIÓN 1: AZUL ELECTRO (Moderno/Tecnológico) */
+/* :root {
+    --primary-color: #0070f3;
+    --primary-color-hover: #3291ff;
+    --background-hover-color: #0070f320;
+    --medium-grey: #888;
+    --light-grey: #eaeaea;
+} */
+
+/* OPCIÓN 2: VERDE NEÓN (Energía/Crossfit) */
+/* :root {
+    --primary-color: #ccff00;
+    --primary-color-hover: #b3e600;
+    --background-hover-color: #ccff0033;
+    --medium-grey: #999;
+    --light-grey: #ffffff40;
+} */
+
+/* OPCIÓN 3: VIOLETA VIBRANTE (Premium/Fitness) */
+/* :root {
+    --primary-color: #7928ca;
+    --primary-color-hover: #8a3fd6;
+    --background-hover-color: #7928ca33;
+    --medium-grey: #8d8d8d;
+    --light-grey: #ffffff36;
+} */
+
+/* ——— VARIANTES DE FONDO DARK (Descomentar para probar) ——— */
+
+/* FONDO AZUL NOCTURNO (Slate/Navy) */
+/* [data-theme='dark'] {
+    --text-color: #f1f5f9;
+    --text-color-distinct: #94a3b8;
+    --background-color: #0f172a;
+    --background-color-distinct: #1e293b;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --login-overlay: rgba(15, 23, 42, 0.5);
+    --login-card-bg: rgba(30, 41, 59, 0.85);
+} */
+
+/* FONDO BOSQUE PROFUNDO (Dark Green) */
+/* [data-theme='dark'] {
+    --text-color: #ecfdf5;
+    --text-color-distinct: #6ee7b7;
+    --background-color: #022c22;
+    --background-color-distinct: #064e3b;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --login-overlay: rgba(2, 44, 34, 0.5);
+    --login-card-bg: rgba(6, 78, 59, 0.85);
+} */
+
+/* FONDO MIDNIGHT (Indigo profundo) */
+/* [data-theme='dark'] {
+    --text-color: #e0e7ff;
+    --text-color-distinct: #818cf8;
+    --background-color: #1e1b4b;
+    --background-color-distinct: #312e81;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --login-overlay: rgba(30, 27, 75, 0.5);
+    --login-card-bg: rgba(49, 46, 129, 0.85);
+} */
+
+[data-theme='dark'] {
+    --text-color: #fafafa;
+    --text-color-distinct: #b1b1b1;
+    --background-color: #101010;
+    --background-color-distinct: #1b1b1bab;
+    --border-color: rgba(255, 255, 255, 0.2);
+    --login-overlay: rgba(0, 0, 0, 0.2);
+    --login-card-bg: rgba(16, 16, 16, 0.72);
+    --login-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+    --login-card-border: var(--border-color);
+    --login-input-border: var(--border-color);
+    --login-input-focus-shadow: var(--background-hover-color);
+    --login-backdrop-blur: none;
+    --success-text-color: #77E97B;
+    --button-hover-text-color: rgba(255, 255, 255, 0.8);
+    --admin-kpi-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.025) 48%, rgba(255, 255, 255, 0) 100%);
+}
+
+[data-theme='light'] {
+    --text-color: #101010;
+    --text-color-distinct: #444444;
+    --background-color: #fff;
+    --background-color-distinct: #ececec49;
+    --border-color: rgba(0, 0, 0, 0.05);
+    --login-overlay: rgba(255, 255, 255, 0.6);
+    --login-card-bg: #ffffff;
+    --login-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+    --login-card-border: rgba(0, 0, 0, 0.04);
+    --login-input-border: #e5e5e5;
+    --login-input-focus-shadow: var(--background-hover-color);
+    --login-backdrop-blur: blur(4px);
+    --success-text-color: #059669;
+    --button-hover-text-color: rgba(0, 0, 0, 0.7);
+    --admin-kpi-card-gradient: linear-gradient(180deg, rgba(16, 16, 16, 0.035) 0%, rgba(16, 16, 16, 0.015) 46%, rgba(255, 255, 255, 0) 100%);
+}

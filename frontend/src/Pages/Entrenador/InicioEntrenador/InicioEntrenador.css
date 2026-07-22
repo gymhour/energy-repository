@@ -1,0 +1,45 @@
+@import url("../../../variables.css");
+
+.inicio-entrenador-shortcuts-title {
+    margin: 16px 0px;
+}
+
+.inicio-entrenador-shortcuts {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.inicio-entrenador-shortcuts-item {
+    max-width: 300px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    transition: all ease-in-out 120ms;
+}
+
+.inicio-entrenador-shortcuts-item:hover {
+    background-color: var(--background-hover-color);
+}
+
+.inicio-entrenador-shortcut-link {
+    padding: 20px 20px;
+    color: var(--text-color);
+    text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+@media screen and (max-width: 500px) {
+    .inicio-entrenador-shortcuts-item {
+        width: 100%;
+        max-width: 100%;
+    }
+}

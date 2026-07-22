@@ -1,0 +1,48 @@
+@import url(../../../variables.css);
+
+/* Título de la sección */
+.nueva-medicion-container h2 {
+  margin-top: 10px;
+  margin-bottom: 20px;
+  color: var(--text-color);
+}
+
+/* Mensaje de error */
+.error-message {
+  color: #ff6b6b;
+  margin-bottom: 1rem;
+}
+
+.nueva-medicion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.nueva-medicion-input-ctn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Botón Agregar */
+.btn-agregar {
+  padding: 10px;
+  background-color: none;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-color);
+  color: #FAFAFA;
+  text-decoration: none;
+  width: fit-content;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.btn-agregar:hover {
+  background-color: #ea5642;
+  transform: scale(1.02);
+}

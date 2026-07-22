@@ -1,0 +1,859 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Gym",
+    "version": "1.0.0",
+    "description": "Documentación de la API del gimnasio"
+  },
+  "servers": [
+    {
+      "url": "https://gymbackend-qr97.onrender.com",
+      "description": "Servidor en la nube"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Registrar un nuevo usuario",
+        "description": "Permite registrar un nuevo usuario en el sistema.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "usuario@ejemplo.com",
+                    "description": "El correo electrónico del usuario."
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "contraseñaSegura123",
+                    "description": "La contraseña del usuario."
+                  },
+                  "tipo": {
+                    "type": "string",
+                    "example": "cliente",
+                    "description": "El tipo de usuario, por ejemplo, 'cliente' o 'admin'."
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario registrado con éxito.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error en la solicitud, por ejemplo, email ya existe o datos faltantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "El email ya existe."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Hubo un error en el registro."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Iniciar sesión",
+        "description": "Permite iniciar sesión a un usuario registrado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "usuario@ejemplo.com",
+                    "description": "El correo electrónico del usuario."
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "contraseñaSegura123",
+                    "description": "La contraseña del usuario."
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Inicio de sesión exitoso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos faltantes en la solicitud.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "El email es obligatorio."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "El usuario no fue encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "El usuario no existe."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Contraseña incorrecta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Usuario o contraseña incorrecto."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno del servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Error al procesar la solicitud."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usuarios": {
+      "get": {
+        "summary": "Obtener todos los usuarios",
+        "tags": ["Usuarios"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios",
+            "content": {
+              "application/json": {
+                "example": [
+                  { "ID_Usuario": 1, "email": "user1@example.com" },
+                  { "ID_Usuario": 2, "email": "user2@example.com" }
+                ]
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear un nuevo usuario",
+        "tags": ["Usuarios"],
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "email": "nuevo_usuario@example.com",
+                "password": "password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuario creado",
+            "content": {
+              "application/json": {
+                "example": { "ID_Usuario": 1, "email": "nuevo_usuario@example.com" }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida"
+          },
+          "500": {
+            "description": "Error interno"
+          }
+        }
+      }
+    },
+    "/usuarios/{id}": {
+      "get": {
+        "summary": "Obtener un usuario por ID",
+        "tags": ["Usuarios"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario encontrado",
+            "content": {
+              "application/json": {
+                "example": { "ID_Usuario": 1, "email": "usuario@example.com" }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "500": {
+            "description": "Error interno"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar un usuario",
+        "tags": ["Usuarios"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "email": "actualizado@example.com",
+                "password": "nuevo_password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuario actualizado",
+            "content": {
+              "application/json": {
+                "example": { "ID_Usuario": 1, "email": "actualizado@example.com" }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida"
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "500": {
+            "description": "Error interno"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar un usuario",
+        "tags": ["Usuarios"],
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario eliminado",
+            "content": {
+              "application/json": {
+                "example": { "message": "El usuario 1 ha sido eliminado" }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuario no encontrado"
+          },
+          "500": {
+            "description": "Error interno"
+          }
+        }
+      }
+    },
+    "/clase/horario": {
+      "get": {
+        "summary": "Obtener todas las clases con horarios",
+        "tags": ["Clases"],
+        "responses": {
+          "200": {
+            "description": "Lista de clases con horarios",
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "ID_Clase": 1,
+                    "nombre": "Clase 1",
+                    "HorariosClase": [
+                      { "diaSemana": "Lunes", "horaIni": "08:00", "horaFin": "09:00" }
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "500": {
+            "description": "Error interno"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear una nueva clase con horarios",
+        "tags": ["Clases"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "example": {
+                "nombre": "Nueva Clase",
+                "descripcion": "Descripción de la clase",
+                "horarios": [
+                  { "diaSemana": "Martes", "horaIni": "10:00", "horaFin": "11:00", "cupos": 30, "cuposActuales": 0 }
+                ],
+                "image": "(archivo imagen)"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Clase creada",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Clase creada exitosamente",
+                  "clase": {
+                    "ID_Clase": 1,
+                    "nombre": "Nueva Clase",
+                    "descripcion": "Descripción de la clase"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida"
+          },
+          "500": {
+            "description": "Error interno"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar una clase",
+        "tags": ["Clases"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID de la clase"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "nombre": "Clase actualizada",
+                "descripcion": "Descripción actualizada de la clase",
+                "horarios": [
+                  { "diaSemana": "Miércoles", "horaIni": "12:00", "horaFin": "13:00", "cupos": 25 }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Clase actualizada",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Clase actualizada exitosamente",
+                  "clase": {
+                    "ID_Clase": 1,
+                    "nombre": "Clase actualizada",
+                    "descripcion": "Descripción actualizada de la clase"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Solicitud inválida"
+          }
+        }
+      }
+    },
+    "/turnos": {
+    "get": {
+      "tags": ["Turnos"],
+      "summary": "Obtener todos los turnos",
+      "description": "Devuelve una lista de todos los turnos con información adicional del usuario y la clase.",
+      "responses": {
+        "200": {
+          "description": "Lista de turnos obtenida exitosamente.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Turno"
+                }
+              }
+            }
+          }
+        },
+        "500": {
+          "description": "Error interno al obtener los turnos."
+        }
+      }
+    },
+    "post": {
+      "tags": ["Turnos"],
+      "summary": "Crear un nuevo turno",
+      "description": "Crea un turno para un usuario en un horario específico.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TurnoInput"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Turno creado exitosamente.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Turno"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Datos faltantes o cupos no disponibles."
+        },
+        "500": {
+          "description": "Error interno al crear el turno."
+        }
+      }
+    }
+  },
+  "/turnos/{id}": {
+    "get": {
+      "tags": ["Turnos"],
+      "summary": "Obtener un turno por ID",
+      "description": "Devuelve los detalles de un turno específico por su ID.",
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "ID del turno a obtener."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Detalles del turno obtenidos exitosamente.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Turno"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Turno no encontrado."
+        },
+        "500": {
+          "description": "Error interno al obtener el turno."
+        }
+      }
+    },
+    "put": {
+      "tags": ["Turnos"],
+      "summary": "Actualizar un turno por ID",
+      "description": "Actualiza los detalles de un turno específico por su ID.",
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "ID del turno a actualizar."
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TurnoInput"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Turno actualizado exitosamente.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Turno"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Cupos no disponibles o datos incorrectos."
+        },
+        "404": {
+          "description": "Turno no encontrado."
+        },
+        "500": {
+          "description": "Error interno al actualizar el turno."
+        }
+      }
+    },
+    "delete": {
+      "tags": ["Turnos"],
+      "summary": "Eliminar un turno por ID",
+      "description": "Elimina un turno específico por su ID.",
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "ID del turno a eliminar."
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Turno eliminado exitosamente."
+        },
+        "404": {
+          "description": "Turno no encontrado."
+        },
+        "500": {
+          "description": "Error interno al eliminar el turno."
+        }
+      }
+    }
+  }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "ID_Usuario": {
+            "type": "integer",
+            "description": "ID único del usuario",
+            "example": 1
+          },
+          "email": {
+            "type": "string",
+            "description": "Correo electrónico del usuario",
+            "example": "usuario@ejemplo.com"
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre del usuario",
+            "example": "Juan"
+          },
+          "apellido": {
+            "type": "string",
+            "description": "Apellido del usuario",
+            "example": "Pérez"
+          },
+          "password": {
+            "type": "string",
+            "description": "Contraseña del usuario",
+            "example": "miContraseña123"
+          },
+          "direc": {
+            "type": "string",
+            "description": "Dirección del usuario",
+            "example": "Calle Ficticia 123"
+          },
+          "tel": {
+            "type": "string",
+            "description": "Teléfono del usuario",
+            "example": "123456789"
+          },
+          "tipo": {
+            "type": "string",
+            "description": "Tipo de usuario",
+            "example": "cliente"
+          },
+          "fechaRegistro": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de registro del usuario",
+            "example": "2024-12-10T12:00:00Z"
+          },
+          "fechaBaja": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de baja del usuario",
+            "example": "2024-12-11T12:00:00Z"
+          }
+        }
+      },
+      "Turno": {
+      "type": "object",
+      "properties": {
+        "id_turno": { "type": "integer" },
+        "fecha": { "type": "string", "format": "date-time" },
+        "estado": { "type": "string" },
+        "ID_Usuario": { "type": "integer" },
+        "ID_HorarioClase": { "type": "integer" },
+        "User": {
+          "$ref": "#/components/schemas/User"
+        },
+        "HorarioClase": {
+          "$ref": "#/components/schemas/HorarioClase"
+        }
+      }
+    },
+    "TurnoInput": {
+      "type": "object",
+      "required": ["ID_Usuario", "ID_HorarioClase", "fecha"],
+      "properties": {
+        "ID_Usuario": { "type": "integer" },
+        "ID_HorarioClase": { "type": "integer" },
+        "fecha": { "type": "string", "format": "date-time" }
+      }
+    },
+      "HorarioClase": {
+        "type": "object",
+        "properties": {
+          "ID_HorarioClase": {
+            "type": "integer",
+            "description": "ID único del horario de clase",
+            "example": 1
+          },
+          "diaSemana": {
+            "type": "string",
+            "description": "Día de la semana para el horario",
+            "example": "Lunes"
+          },
+          "horaIni": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Hora de inicio del horario",
+            "example": "2024-12-10T08:00:00Z"
+          },
+          "horaFin": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Hora de fin del horario",
+            "example": "2024-12-10T09:00:00Z"
+          },
+          "cupos": {
+            "type": "integer",
+            "description": "Número total de cupos disponibles",
+            "example": 20
+          },
+          "cuposActuales": {
+            "type": "integer",
+            "description": "Número de cupos ocupados hasta el momento",
+            "example": 5
+          },
+          "ID_Clase": {
+            "type": "integer",
+            "description": "ID de la clase asociada",
+            "example": 1
+          }
+        }
+      },
+      "Clase": {
+        "type": "object",
+        "properties": {
+          "ID_Clase": {
+            "type": "integer",
+            "description": "ID único de la clase",
+            "example": 1
+          },
+          "nombre": {
+            "type": "string",
+            "description": "Nombre de la clase",
+            "example": "Yoga"
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción de la clase",
+            "example": "Clase de yoga para principiantes"
+          }
+        }
+      },
+      "ImagenClase": {
+        "type": "object",
+        "properties": {
+          "ID_ImgClase": {
+            "type": "integer",
+            "description": "ID único de la imagen de la clase",
+            "example": 1
+          },
+          "url": {
+            "type": "string",
+            "description": "URL de la imagen de la clase",
+            "example": "http://ejemplo.com/imagen.jpg"
+          },
+          "ID_Clase": {
+            "type": "integer",
+            "description": "ID de la clase asociada",
+            "example": 1
+          }
+        }
+      },
+      "InfoClase": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "ID único de la información de la clase",
+            "example": 1
+          },
+          "tipo": {
+            "type": "string",
+            "description": "Tipo de información de la clase",
+            "example": "material"
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción de la información de la clase",
+            "example": "Material necesario para la clase"
+          },
+          "id_clase": {
+            "type": "integer",
+            "description": "ID de la clase asociada",
+            "example": 1
+          }
+        }
+      }
+    }
+  }
+}

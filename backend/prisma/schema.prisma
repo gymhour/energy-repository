@@ -1,0 +1,408 @@
+generator client {
+  provider   = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  ID_Usuario         Int                 @id @default(autoincrement())
+  dni                String?             @unique
+  email              String              @unique
+  nombre             String?
+  apellido           String?
+  password           String
+  profesion          String?
+  direc              String?
+  tel                String?
+  tipo               String?
+  fechaRegistro      DateTime?           @default(now())
+  fechaBaja          DateTime?
+  motivoAlta         String? // por qué se sumó el socio (whitelist MOTIVOS_ALTA); opcional
+  fechaCumple        DateTime?
+  estado             Boolean?
+  resetToken         String?
+  resetTokenExpiry   DateTime?
+  imagenUsuario      String?
+  observacionesSalud String?             @db.Text
+  fichaMedicaUrl     String?             @db.Text
+  usaTurnosFijos     Boolean             @default(false)
+  ID_Plan            Int?
+  plan               Plan?               @relation("UserPlan", fields: [ID_Plan], references: [ID_Plan])
+  Turnos             Turno[]
+  TurnosFijos        TurnoFijo[]
+  EjerciciosMedicion EjercicioMedicion[]
+  ClasesACargo       Clase[]             @relation("EntrenadoresClases")
+  rutinasAsignadas   Rutina[]            @relation("AlumnoRutinas")
+  rutinasCreadas     Rutina[]            @relation("EntrenadorRutinas")
+  gruposUsuario      GrupoUsuarioMiembro[]
+  asignacionesRutina RutinaAsignacionUsuario[]
+  Cuotas             Cuota[]
+  Asistencias        Asistencia[]
+  movimientos        MovimientoSocio[]
+  contactos          ContactoAlumno[]
+
+  @@map("User")
+}
+
+model Plan {
+  ID_Plan            Int     @id @default(autoincrement())
+  nombre             String  @unique
+  desc               String?
+  precio             Float
+  duracion           String  @default("MENSUAL")
+  sesionesPorSemana  Int     @default(0) // DEPRECADO: reemplazado por sesionesTotales (se conserva por compat)
+  sesionesTotales    Int     @default(0) // total de sesiones del período del plan
+  sesionesGracia     Int     @default(0)
+  requiereTurno      Boolean @default(true)
+  usuarios           User[]  @relation("UserPlan")
+  cuotas             Cuota[]
+
+  @@map("Plan")
+}
+
+model Cuota {
+  ID_Cuota                   Int          @id @default(autoincrement())
+  mes                        String // Ejemplo: "2024-11" o "Noviembre 2024"
+  importe                    Float // El importe de la cuota
+  vence                      DateTime // Fecha de vencimiento de la cuota
+  fechaInicio                DateTime?
+  fechaFin                   DateTime?
+  pagada                     Boolean      @default(false) // Indica si la cuota fue pagada
+  formaPago                  String?
+  fechaPago                  DateTime? // Fecha en que se realizó el pago, opcional
+  vencida                    Boolean      @default(false)
+  planNombreSnapshot         String?
+  planDuracionSnapshot       String?
+  planSesionesSemanaSnapshot Int? // DEPRECADO: reemplazado por planSesionesTotalesSnapshot
+  planSesionesTotalesSnapshot Int?
+  planSesionesGraciaSnapshot Int?
+  planRequiereTurnoSnapshot  Boolean?
+  ID_Usuario                 Int
+  ID_Plan                    Int?
+  User                       User         @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+  Plan                       Plan?        @relation(fields: [ID_Plan], references: [ID_Plan])
+  Turnos                     Turno[]
+  Asistencias                Asistencia[]
+
+  @@index([mes])
+  @@index([ID_Usuario, mes])
+  @@map("Cuota")
+}
+
+model Gasto {
+  ID_Gasto    Int      @id @default(autoincrement())
+  fecha       DateTime
+  mes         String // "YYYY-MM" derivado por el backend desde la fecha
+  categoria   String // whitelist: Alquiler|Sueldos|Insumos|Servicios|Marketing|Impuestos|Otros
+  monto       Float
+  descripcion String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([mes])
+  @@index([categoria])
+  @@index([fecha])
+  @@map("Gasto")
+}
+
+model ContactoAlumno {
+  id         Int      @id @default(autoincrement())
+  ID_Usuario Int? // SetNull para conservar el log si se borra el usuario
+  asunto     String
+  plantilla  String? // 'TE_EXTRANAMOS' (extensible)
+  enviadoPor Int? // ID del admin que lo envió
+  fecha      DateTime @default(now())
+  User       User?    @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: SetNull)
+
+  @@index([ID_Usuario, fecha])
+  @@map("ContactoAlumno")
+}
+
+model MovimientoSocio {
+  id             Int      @id @default(autoincrement())
+  ID_Usuario     Int? // nullable + SetNull: conserva el histórico aunque se borre el usuario
+  tipo           String // 'ALTA' | 'BAJA'
+  esReactivacion Boolean  @default(false) // true sólo en ALTA por reactivación
+  motivoBaja     String? // sólo en BAJA: razón del churn (whitelist); null en ALTA
+  motivoReactivacion String? // sólo en ALTA por reactivación (whitelist MOTIVOS_ALTA)
+  fecha          DateTime
+  createdAt      DateTime @default(now())
+  User           User?    @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: SetNull)
+
+  @@index([fecha])
+  @@index([tipo])
+  @@map("MovimientoSocio")
+}
+
+model Turno {
+  id_turno        Int          @id @default(autoincrement())
+  fecha           DateTime
+  estado          String
+  origen          String       @default("MANUAL")
+  fechaCreacion   DateTime
+  canceladoEn     DateTime?
+  asistidoEn      DateTime?
+  ID_HorarioClase Int
+  ID_Usuario      Int
+  ID_Cuota        Int?
+  HorarioClase    HorarioClase @relation(fields: [ID_HorarioClase], references: [ID_HorarioClase], onDelete: Cascade)
+  User            User         @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+  Cuota           Cuota?       @relation(fields: [ID_Cuota], references: [ID_Cuota], onDelete: SetNull)
+  Asistencias     Asistencia[]
+
+  @@index([ID_Cuota])
+  @@index([fecha])
+  @@index([ID_HorarioClase, fecha])
+  @@index([ID_Usuario, ID_HorarioClase, fecha])
+  @@map("Turno")
+}
+
+model TurnoFijo {
+  ID_TurnoFijo    Int          @id @default(autoincrement())
+  ID_Usuario      Int
+  ID_HorarioClase Int
+  activo          Boolean      @default(true)
+  fechaCreacion   DateTime     @default(now())
+  User            User         @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+  HorarioClase    HorarioClase @relation(fields: [ID_HorarioClase], references: [ID_HorarioClase], onDelete: Cascade)
+
+  @@unique([ID_Usuario, ID_HorarioClase])
+  @@map("TurnoFijo")
+}
+
+model HorarioClase {
+  ID_HorarioClase Int      @id @default(autoincrement())
+  diaSemana       String
+  horaIni         DateTime
+  horaFin         DateTime
+  cupos           Int
+  ID_Clase        Int
+  Clase           Clase    @relation(fields: [ID_Clase], references: [ID_Clase], onDelete: Cascade)
+  Turnos          Turno[]
+  TurnosFijos     TurnoFijo[]
+  activo          Boolean  @default(true)
+
+  @@map("HorarioClase")
+}
+
+model Clase {
+  ID_Clase      Int            @id @default(autoincrement())
+  nombre        String
+  descripcion   String?        @db.Text
+  imagenClase   String? // Campo para coludinary
+  HorariosClase HorarioClase[]
+  Entrenadores  User[]         @relation("EntrenadoresClases")
+
+  @@map("Clase")
+}
+
+enum BlockType {
+  SETS_REPS
+  ROUNDS
+  EMOM
+  TABATA
+  AMRAP
+  LADDER
+}
+
+model Rutina {
+  ID_Rutina           Int         @id @default(autoincrement())
+  ID_Usuario          Int
+  User                User        @relation("AlumnoRutinas", fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+  ID_Entrenador       Int? // puede ser null si lo crea el alumno
+  Entrenador          User?       @relation("EntrenadorRutinas", fields: [ID_Entrenador], references: [ID_Usuario])
+  nombre              String
+  desc                String?
+  claseRutina         String?
+  grupoMuscularRutina String?
+  urlPlanificacion    String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  Bloques             Bloque[]
+  DiasRutina          RutinaDia[]
+  Semanas             Semana[] // <-- nuevas semanas
+  asignacionesUsuarios RutinaAsignacionUsuario[]
+  asignacionesGrupos   RutinaAsignacionGrupo[]
+
+  @@map("Rutina")
+}
+
+model GrupoUsuario {
+  ID_GrupoUsuario Int                    @id @default(autoincrement())
+  nombre          String
+  descripcion     String?
+  estado          Boolean                @default(true)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  miembros        GrupoUsuarioMiembro[]
+  rutinas         RutinaAsignacionGrupo[]
+
+  @@map("GrupoUsuario")
+}
+
+model GrupoUsuarioMiembro {
+  ID_GrupoUsuarioMiembro Int          @id @default(autoincrement())
+  ID_GrupoUsuario        Int
+  ID_Usuario             Int
+  createdAt              DateTime     @default(now())
+  grupoUsuario           GrupoUsuario @relation(fields: [ID_GrupoUsuario], references: [ID_GrupoUsuario], onDelete: Cascade)
+  usuario                User         @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+
+  @@unique([ID_GrupoUsuario, ID_Usuario])
+  @@index([ID_Usuario])
+  @@map("GrupoUsuarioMiembro")
+}
+
+model RutinaAsignacionUsuario {
+  ID_RutinaAsignacionUsuario Int      @id @default(autoincrement())
+  ID_Rutina                   Int
+  ID_Usuario                  Int
+  createdAt                   DateTime @default(now())
+  rutina                      Rutina   @relation(fields: [ID_Rutina], references: [ID_Rutina], onDelete: Cascade)
+  usuario                     User     @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+
+  @@unique([ID_Rutina, ID_Usuario])
+  @@index([ID_Usuario])
+  @@map("RutinaAsignacionUsuario")
+}
+
+model RutinaAsignacionGrupo {
+  ID_RutinaAsignacionGrupo Int          @id @default(autoincrement())
+  ID_Rutina                Int
+  ID_GrupoUsuario          Int
+  createdAt                DateTime     @default(now())
+  rutina                   Rutina       @relation(fields: [ID_Rutina], references: [ID_Rutina], onDelete: Cascade)
+  grupoUsuario             GrupoUsuario @relation(fields: [ID_GrupoUsuario], references: [ID_GrupoUsuario], onDelete: Cascade)
+
+  @@unique([ID_Rutina, ID_GrupoUsuario])
+  @@index([ID_GrupoUsuario])
+  @@map("RutinaAsignacionGrupo")
+}
+
+model RutinaDia {
+  id             Int      @id @default(autoincrement())
+  dia            String
+  rutina         Rutina   @relation(fields: [rutinaId], references: [ID_Rutina], onDelete: Cascade)
+  rutinaId       Int
+  Bloques        Bloque[] // nuevo: relación inversa
+  nombre         String? // nuevo: nombre del día (ej: "Piernas - Día 1")
+  descripcion    String? // nuevo: descripción del día
+  // nuevo: relación opcional con una semana (si el día pertenece a una semana)
+  rutinaSemanaId Int?
+  rutinaSemana   Semana?  @relation(fields: [rutinaSemanaId], references: [id], onDelete: Cascade)
+
+  @@map("RutinaDia")
+}
+
+model Semana {
+  id       Int         @id @default(autoincrement())
+  nombre   String?
+  numero   Int? // opcional: número de semana dentro de la rutina
+  rutina   Rutina      @relation(fields: [rutinaId], references: [ID_Rutina], onDelete: Cascade)
+  rutinaId Int
+  Dias     RutinaDia[] // días que pertenecen a esta semana
+
+  @@map("Semana")
+}
+
+model Bloque {
+  ID_Bloque                   Int               @id @default(autoincrement())
+  type                        BlockType
+  // Relación con la rutina
+  ID_Rutina                   Int
+  rutina                      Rutina            @relation(fields: [ID_Rutina], references: [ID_Rutina], onDelete: Cascade)
+  // Campos para SETS_REPS
+  setsReps                    String? // 3x12 string
+  nombreEj                    String? // Nombre del ejercicio (ej: "Bench Press")
+  weight                      String? // Carga opcional (ej: "100kg")
+  descansoRonda               Int? // Descanso entre series
+  // Campos para ROUNDS
+  cantRondas                  Int? // Número de rondas
+  // Campos temporales para EMOM/AMRAP/TABATA
+  durationMin                 Int? // Duración en minutos
+  cantSeries                  Int?
+  descTabata                  String?
+  tiempoTrabajoDescansoTabata String?
+  // Campo para LADDER
+  tipoEscalera                String? // Tipo de escalera
+  // Ahora relación N‑N con catálogo
+  bloqueEjercicios            BloqueEjercicio[]
+  // Nuevo: relación opcional con RutinaDia
+  rutinaDiaId                 Int?
+  rutinaDia                   RutinaDia?        @relation(fields: [rutinaDiaId], references: [id], onDelete: Cascade)
+
+  @@map("Bloque")
+}
+
+/// Ejercicios maestros reutilizables
+model Ejercicio {
+  ID_Ejercicio     Int               @id @default(autoincrement())
+  nombre           String
+  descripcion      String?           @db.Text
+  mediaUrl         String? // imagen o video
+  youtubeUrl       String? // nueva URL de video de YouTube
+  instrucciones    String?           @db.Text // nuevas instrucciones paso a paso
+  esGenerico       Boolean           @default(false) // ← nuevo flag
+  bloqueEjercicios BloqueEjercicio[]
+  musculos         String? // nuevo campo: músculos trabajados
+  equipamiento     String? // nuevo campo: equipamiento necesario
+
+  @@index([esGenerico]) // opcional: index para filtrar rápidamente
+  @@map("Ejercicio")
+}
+
+model BloqueEjercicio {
+  ID_BloqueEjercicio Int       @id @default(autoincrement()) @map("ID") // mapea al nombre real en DB
+  bloque             Bloque    @relation(fields: [ID_Bloque], references: [ID_Bloque], onDelete: Cascade)
+  ID_Bloque          Int
+  ejercicio          Ejercicio @relation(fields: [ID_Ejercicio], references: [ID_Ejercicio], onDelete: Cascade)
+  ID_Ejercicio       Int
+  reps               String?   @db.VarChar(191)
+  setRepWeight       String?   @db.VarChar(191)
+  orden              Int? // posición opcional dentro del bloque
+
+  @@map("BloqueEjercicio") // mapea al nombre físico de la tabla (observá que tu tabla es lowercase)
+}
+
+model EjercicioMedicion {
+  ID_EjercicioMedicion Int                  @id @default(autoincrement())
+  ID_Usuario           Int
+  User                 User                 @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+  nombre               String
+  tipoMedicion         String
+  HistoricoEjercicios  HistoricoEjercicio[]
+
+  @@map("EjercicioMedicion")
+}
+
+model HistoricoEjercicio {
+  ID_HistoricoEjercicio Int               @id @default(autoincrement())
+  Fecha                 DateTime          @default(now())
+  Cantidad              Int
+  ID_EjercicioMedicion  Int
+  EjercicioMedicion     EjercicioMedicion @relation(fields: [ID_EjercicioMedicion], references: [ID_EjercicioMedicion], onDelete: Cascade)
+
+  @@map("HistoricoEjercicio")
+}
+
+model Asistencia {
+  ID_Asistencia      Int      @id @default(autoincrement())
+  fechaIngreso       DateTime @default(now())
+  metodo             String   // "DNI" o "QR"
+  permitido          Boolean  // true si se permitió el paso, false si no
+  resultado          String   // "PERMITIDO", "DENEGADO_CUOTA", "DENEGADO_INACTIVO", "DENEGADO_NO_EXISTE"
+  motivo             String?  // Descripción amigable
+  ID_Usuario         Int?     // Opcional por si ingresa un DNI inexistente
+  ID_Turno           Int?
+  ID_Cuota           Int?
+  User               User?    @relation(fields: [ID_Usuario], references: [ID_Usuario], onDelete: Cascade)
+  Turno              Turno?   @relation(fields: [ID_Turno], references: [id_turno], onDelete: SetNull)
+  Cuota              Cuota?   @relation(fields: [ID_Cuota], references: [ID_Cuota], onDelete: SetNull)
+
+  @@index([ID_Usuario, fechaIngreso])
+  @@index([permitido, fechaIngreso])
+  @@map("Asistencia")
+}

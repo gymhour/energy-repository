@@ -1,0 +1,55 @@
+.exercises-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.exercises-header h2 {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+}
+
+.ejercicios-list {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.exercise-group {
+    width: 100%;
+}
+
+.exercise-group__grid {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.form-input-container label {
+    color: var(--text-color);
+}
+
+.custom-textarea {
+    background-color: var(--background-color-distinct);
+    border-radius: 12px;
+    /* border: none; */
+    border: 1.5px solid var(--background-color-distinct);
+    padding: 16px 12px;
+    font-size: 16px;
+    color: var(--text-color);
+    font-family: sans-serif;
+    outline: none;
+    width: 100%;
+    transition: all ease-in-out 150ms;
+}
+
+.custom-textarea:focus {
+    border: 1.5px solid var(--border-color);
+}

@@ -1,0 +1,907 @@
+@import url("../../../variables.css");
+
+/* Contenedor para scroll horizontal en viewports chicos */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  /* -webkit-overflow-scrolling: touch; */
+}
+
+/* Tabla base */
+.cuotas-table {
+  width: 100%;
+  border-collapse: collapse;
+  /* table-layout: fixed; */
+}
+
+.cuotas-table th,
+.cuotas-table td {
+  padding: 18px 6px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cuotas-table th {
+  background-color: var(--background-color-distinct);
+  font-weight: 400;
+}
+
+/* Título de la columna Acciones centrado (Cuotas y Salidas de dinero) */
+.cuotas-table th:last-child {
+  text-align: center;
+}
+
+/* .cuotas-table th,
+.cuotas-table td {
+  padding: 18px 8px;
+  text-align: left;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.cuotas-table th {
+  background-color: rgba(52, 52, 52, 0.178);
+  font-weight: 400;
+}
+
+.cuotas-table th, .cuotas-table td {
+  min-height: 50px;
+} */
+
+/* Badges */
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 85px;
+}
+
+.badge.paid {
+  background-color: #CDFFCD;
+  color: #1E7E34;
+}
+
+.badge.pending {
+  background-color: #ffe9c6;
+  color: #d27300;
+}
+
+.badge.expired {
+  background-color: #ffcfcf;
+  color: #da311e;
+}
+
+.text-error {
+  color: #c00;
+}
+
+.acciones-cell {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Botones de tabla (estilo similar a la sección de Usuarios) */
+.accion-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border-color);
+  outline: none;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-color);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme="dark"] .accion-button {
+  background: rgba(30, 41, 59, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.accion-button:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: var(--background-hover-color);
+  transform: translateY(-1.5px);
+}
+
+.accion-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.accion-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Acción principal (Pagar / Editar) */
+.accion-button.primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fafafa;
+}
+
+.accion-button.primary:hover:not(:disabled) {
+  background-color: var(--primary-color-hover);
+  border-color: var(--primary-color-hover);
+  color: #fafafa;
+}
+
+.accion-button.edit {
+  background-color: rgba(1, 165, 166, 0.12);
+  border-color: rgba(1, 165, 166, 0.42);
+  color: #018f91;
+}
+
+.accion-button.edit:hover:not(:disabled) {
+  background-color: rgba(1, 165, 166, 0.22);
+  border-color: rgba(1, 165, 166, 0.72);
+  color: #017f81;
+}
+
+/* Acción "Pagar" (verde con fondo semitransparente) */
+.accion-button.pay {
+  background-color: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.45);
+  color: #22c55e;
+}
+
+.accion-button.pay:hover:not(:disabled) {
+  background-color: rgba(34, 197, 94, 0.28);
+  border-color: rgba(34, 197, 94, 0.7);
+  color: #22c55e;
+}
+
+/* Acción destructiva (Eliminar) */
+.accion-button.delete {
+  color: #e5484d;
+}
+
+.accion-button.delete:hover:not(:disabled) {
+  border-color: #e5484d;
+  background-color: #e5484d;
+  color: #fff;
+  transform: translateY(-1.5px);
+}
+
+/* Filtros estilo Usuarios (grid): que el datepicker ocupe todo el ancho de la celda */
+.filtros-form .usuarios-filtros-form-inputs-ctn .react-datepicker-wrapper,
+.filtros-form .usuarios-filtros-form-inputs-ctn .react-datepicker-wrapper input {
+  width: 100%;
+}
+
+/* Header */
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.generate-cuotas-btns {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.generate-cuotas-btns .secondary-button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-color);
+  font-weight: 400;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.generate-cuotas-btns .secondary-button:hover {
+  border-color: rgba(1, 165, 166, 0.34);
+  background: rgba(1, 165, 166, 0.055);
+  box-shadow: 0 0 0 3px rgba(1, 165, 166, 0.045);
+}
+
+.generate-cuotas-btns .secondary-button:focus-visible {
+  outline: none;
+  border-color: rgba(1, 165, 166, 0.48);
+  box-shadow: 0 0 0 3px rgba(1, 165, 166, 0.11);
+}
+
+.cuotas-danger-outline-button {
+  --cuotas-danger: #c94332;
+  --cuotas-danger-border: rgba(201, 67, 50, 0.44);
+  --cuotas-danger-bg: rgba(201, 67, 50, 0.07);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--cuotas-danger-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cuotas-danger);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.cuotas-danger-outline-button:hover {
+  border-color: var(--cuotas-danger);
+  background: var(--cuotas-danger-bg);
+  box-shadow: 0 0 0 3px rgba(201, 67, 50, 0.06);
+}
+
+.cuotas-danger-outline-button:focus-visible {
+  outline: none;
+  border-color: var(--cuotas-danger);
+  box-shadow: 0 0 0 3px rgba(201, 67, 50, 0.14);
+}
+
+.cuotas-filters-toggle-row {
+  margin: 0 0 16px;
+}
+
+.cuotas-filters-toggle-row .toggle-filters-button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.cuotas-filters-toggle-row .toggle-filters-button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: var(--background-hover-color);
+}
+
+.cuotas-filtros-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 22px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.cuotas-filtros-form-inputs-ctn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cuotas-filtros-form-inputs-ctn label {
+  color: var(--text-color-distinct);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.cuotas-filtros-form-inputs-ctn .custom-input-wrapper,
+.cuotas-filtros-form-inputs-ctn .custom-dropdown,
+.cuotas-filtros-form-inputs-ctn .custom-datepicker,
+.cuotas-filtros-form-inputs-ctn .custom-datepicker-mes {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.cuotas-filtros-form-inputs-ctn .custom-dropdown,
+.cuotas-filtros-form-inputs-ctn input {
+  min-height: 42px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.cuotas-filtros-form-inputs-ctn .custom-dropdown {
+  padding: 10px 34px 10px 12px;
+}
+
+.cuotas-filtros-form-inputs-ctn input {
+  padding: 10px 12px;
+}
+
+.cuotas-filtros-form-inputs-ctn .custom-dropdown:focus,
+.cuotas-filtros-form-inputs-ctn input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--background-hover-color);
+}
+
+.cuotas-filtros-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-self: flex-end;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.cuotas-filtros-form-actions .primary-button,
+.cuotas-filtros-form-actions .secondary-button {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 9px 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cuotas-filtros-form-actions .primary-button {
+  border: none;
+}
+
+.cuotas-filtros-form-actions .secondary-button {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+}
+
+.cuotas-filtros-form-actions .secondary-button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: var(--background-hover-color);
+}
+
+/* Modal overlay y contenido */
+.cuotas-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.cuotas-modal {
+  width: min(92vw, 680px);
+  max-height: min(88vh, 760px);
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color);
+  color: var(--text-color);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+}
+
+.cuotas-modal-small {
+  width: min(92vw, 560px);
+}
+
+.cuotas-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cuotas-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  line-height: 1.25;
+}
+
+.cuotas-modal-header span {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-color-distinct);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.cuotas-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color-distinct);
+  color: var(--text-color-distinct);
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.cuotas-modal-close:hover {
+  border-color: rgba(218, 70, 50, 0.34);
+  background: var(--background-hover-color);
+  color: var(--text-color);
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cuotas-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cuotas-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cuotas-modal-field-wide {
+  grid-column: 1 / -1;
+}
+
+.cuotas-modal-field label {
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.cuotas-plan-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color-distinct);
+  color: var(--text-color-distinct);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.cuotas-plan-preview strong {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.cuotas-modal-note {
+  padding: 10px 12px;
+  border: 1px solid rgba(218, 196, 50, 0.22);
+  border-radius: 8px;
+  background: rgb(215 218 50 / 8%);
+  color: #c6982c;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cuotas-modal .custom-input-wrapper,
+.cuotas-modal .custom-dropdown,
+.cuotas-modal .custom-datepicker,
+.cuotas-modal .custom-datepicker-mes {
+  width: 100%;
+  min-width: 0;
+}
+
+.cuotas-modal .custom-input,
+.cuotas-modal .custom-dropdown,
+.cuotas-modal .custom-datepicker,
+.cuotas-modal .custom-datepicker-mes {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color-distinct);
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.cuotas-modal .custom-input:focus,
+.cuotas-modal .custom-dropdown:focus,
+.cuotas-modal .custom-datepicker:focus,
+.cuotas-modal .custom-datepicker-mes:focus {
+  border-color: rgba(218, 70, 50, 0.48);
+  box-shadow: 0 0 0 3px rgba(218, 70, 50, 0.12);
+}
+
+.cuotas-modal .cuotas-select__control {
+  width: 100% !important;
+  min-height: 44px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color-distinct);
+  box-shadow: none;
+}
+
+.cuotas-modal .cuotas-select__control:hover,
+.cuotas-modal .cuotas-select__control--is-focused {
+  border-color: rgba(218, 70, 50, 0.48);
+  box-shadow: 0 0 0 3px rgba(218, 70, 50, 0.12);
+}
+
+.cuotas-modal .cuotas-select__single-value,
+.cuotas-modal .cuotas-select__input-container {
+  color: var(--text-color);
+}
+
+.cuotas-modal .cuotas-select__placeholder {
+  color: var(--text-color-distinct);
+}
+
+.cuotas-modal .cuotas-select__menu {
+  z-index: 1001;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--background-color);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+}
+
+.cuotas-modal .cuotas-select__option {
+  color: var(--text-color);
+  background: var(--background-color);
+  font-size: 14px;
+}
+
+.cuotas-modal .cuotas-select__option--is-focused {
+  background: var(--background-hover-color);
+}
+
+.cuotas-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.cuotas-modal-primary-button,
+.cuotas-modal-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.cuotas-modal-primary-button {
+  border: 0;
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.cuotas-modal-primary-button:hover {
+  background-color: var(--primary-color-hover);
+}
+
+.cuotas-modal-secondary-button {
+  border: 1px solid var(--border-color);
+  background-color: var(--background-color-distinct);
+  color: var(--text-color);
+}
+
+.cuotas-modal-secondary-button:hover {
+  border-color: rgba(218, 70, 50, 0.28);
+  background: var(--background-hover-color);
+}
+
+.cuotas-modal-danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 8px;
+  background-color: var(--primary-color);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.cuotas-modal-danger-button:hover {
+  background-color: var(--primary-color-hover);
+}
+
+.validation-modal {
+  width: min(92vw, 660px);
+}
+
+.validation-summary {
+  margin: 16px 0 0;
+  color: var(--text-color-distinct);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.validation-problems-list {
+  display: grid;
+  gap: 10px;
+  max-height: 350px;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding-right: 4px;
+}
+
+.validation-problem-card {
+  padding: 12px;
+  border: 1px solid rgba(218, 70, 50, 0.18);
+  border-radius: 8px;
+  background: rgba(218, 70, 50, 0.07);
+}
+
+.validation-problem-card strong {
+  display: block;
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.validation-problem-card span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-color-distinct);
+  font-size: 13px;
+}
+
+.validation-problem-card ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--text-color);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.validation-problem-card li + li {
+  margin-top: 4px;
+}
+
+/* DatePicker / Select */
+.css-1yju044-control,
+.css-6anckf-control,
+.css-vdx20g-menu,
+.css-13cymwt-control,
+.css-t3ipsp-control,
+.css-t3ipsp-control:hover,
+.css-1nmdiq5-menu {
+  width: 300px !important;
+  background-color: var(--background-color) !important;
+  color: var(--text-color);
+  min-height: 50px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  border-color: var(--light-grey) !important;
+}
+
+.css-1dimb5e-singleValue,
+.css-1cfo1cf {
+  color: var(--text-color) !important;
+}
+
+.custom-datepicker-mes {
+  width: 300px;
+}
+
+.form-input-ctn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: start;
+}
+
+/* Mes capitalizado sólo la primera letra */
+.cuotas-usuario-mes-col {
+  text-transform: lowercase;
+}
+
+.cuotas-usuario-mes-col::first-letter {
+  text-transform: uppercase;
+}
+
+/* ====== RESPONSIVE ====== */
+
+/* 1) Ajustes suaves tablet */
+@media (max-width: 900px) {
+
+  .cuotas-table th,
+  .cuotas-table td {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .cuotas-modal-overlay {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .cuotas-modal {
+    width: 100%;
+    max-height: 92vh;
+    padding: 18px;
+  }
+
+  .cuotas-modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cuotas-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .cuotas-modal-primary-button,
+  .cuotas-modal-secondary-button,
+  .cuotas-modal-danger-button {
+    width: 100%;
+  }
+}
+
+/* 2) Card view debajo de 700px */
+@media (max-width: 700px) {
+  .cuotas-table thead {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+  }
+
+  .cuotas-table,
+  .cuotas-table tbody,
+  .cuotas-table tr,
+  .cuotas-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .cuotas-table tr {
+    margin: 0 0 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--background-color-distinct);
+  }
+
+  .cuotas-table td {
+    white-space: normal;
+    padding: 12px 12px 12px 44%;
+    position: relative;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    min-height: 44px;
+  }
+
+  .cuotas-table td:last-child {
+    border-bottom: none;
+  }
+
+  .cuotas-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    width: 40%;
+    font-weight: 600;
+    opacity: 0.85;
+    line-height: 1.2;
+  }
+
+  /* Acciones más respiradas */
+  .acciones-cell {
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  /* Botones de paginación touch-friendly */
+  .btn-page {
+    padding: 12px;
+  }
+}
+
+/* 3) Modales y filtros en teléfonos */
+@media (max-width: 480px) {
+  .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .generate-cuotas-btns {
+    margin-top: 15px;
+  }
+}
+
+/* Barra de progreso REAL de la generación masiva por lotes */
+.cuotas-bulk-progress-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.cuotas-bulk-progress-card {
+  width: min(92vw, 460px);
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--background-color);
+  color: var(--text-color);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
+.cuotas-bulk-progress-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.cuotas-bulk-progress-text {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--text-color-distinct);
+}
+
+.cuotas-bulk-progress-track {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--background-hover-color);
+  overflow: hidden;
+}
+
+.cuotas-bulk-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary-color);
+  transition: width 0.35s ease;
+}
+
+.cuotas-bulk-progress-pct {
+  display: block;
+  margin-top: 8px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color-distinct);
+}

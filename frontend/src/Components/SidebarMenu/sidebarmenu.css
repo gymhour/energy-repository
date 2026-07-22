@@ -1,0 +1,363 @@
+@import url(../../variables.css);
+
+/* ============================
+   BASE SIDEBAR (desktop + mobile)
+   ============================ */
+.sidebar {
+  position: sticky;
+  top: 0;
+  width: 280px;
+  flex: 0 0 280px;
+  min-height: 100vh;
+  background-color: var(--background-color);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px;
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.1);
+  transition: width .22s ease, flex-basis .22s ease, padding .22s ease;
+  z-index: 20;
+}
+
+.sidebar-collapse-button {
+  position: absolute;
+  top: 28px;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--background-color);
+  color: var(--text-color-distinct);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.sidebar-collapse-button:hover {
+  border-color: rgba(1, 165, 166, 0.38);
+  color: var(--primary-color);
+  background: color-mix(in srgb, var(--background-color) 88%, var(--primary-color));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.16);
+}
+
+.sidebar-collapse-button:focus-visible {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--background-hover-color);
+}
+
+.sidebar-logo {
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.logo {
+  max-width: 120px;
+  width: 100px;
+}
+
+.menu-divider {
+  height: 1.5px;
+  width: 280px;
+  background-color: var(--border-color);
+}
+
+.sidebar-menu {
+  flex-grow: 1;
+}
+
+.menu-title,
+.profile-title {
+  font-size: 12px;
+  color: var(--text-color);
+  margin-bottom: 10px;
+}
+
+.menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--text-color);
+  transition: background-color 0.3s;
+}
+
+.menu-item:hover {
+  background-color: var(--border-color);
+}
+
+.menu-item.logout {
+  color: #b45a5b;
+}
+
+.profile-section {
+  margin-top: 20px;
+}
+
+.sidebar-footer {
+  margin-top: 50px;
+  text-align: center;
+}
+
+.sidebar-footer img {
+  max-width: 150px;
+  width: 120px;
+}
+
+.menu-item i {
+  width: 12px;
+  height: 12px;
+  background-color: #555;
+  display: inline-block;
+  border-radius: 50%;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
+
+.menu-list a {
+  text-decoration: none;
+  color: var(--text-color-distinct);
+}
+
+.menu-link.active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.menu-link.active .icon {
+  stroke: var(--primary-color);
+}
+
+.sidebar.collapsed {
+  width: 82px;
+  flex-basis: 82px;
+  padding: 20px 12px;
+}
+
+.sidebar.collapsed .sidebar-logo {
+  margin-bottom: 24px;
+  gap: 14px;
+}
+
+.sidebar.collapsed .logo {
+  width: 40px;
+}
+
+.sidebar.collapsed .menu-divider {
+  width: 48px;
+}
+
+.sidebar.collapsed .menu-title,
+.sidebar.collapsed .profile-title,
+.sidebar.collapsed .sidebar-footer {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+  gap: 0;
+  min-height: 44px;
+  padding: 12px;
+  font-size: 0;
+}
+
+.sidebar.collapsed .menu-item .icon,
+.sidebar.collapsed .theme-toggle-wrapper svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.sidebar.collapsed .theme-toggle-wrapper {
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar.collapsed .theme-toggle-text {
+  display: none;
+}
+
+/* ============================
+     HAMBURGER BUTTON (base)
+     ============================ */
+.hamburger-btn {
+  display: none;
+  /* sólo en mobile */
+  position: static;
+  margin: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ============================
+     OVERLAY & CLOSE BUTTON
+     ============================ */
+/* overlay oculto por defecto */
+.overlay {
+  display: none;
+}
+
+.close-btn {
+  display: none;
+  /* sólo en mobile */
+  background: none;
+  border: none;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  cursor: pointer;
+}
+
+/* ============================
+     MOBILE NAVBAR (fixed top)
+     ============================ */
+.mobile-navbar {
+  display: none;
+  /* oculto en desktop */
+}
+
+@media (max-width: 768px) {
+
+  /* 1) Navbar superior con hamburguesa y logo centrado */
+  .mobile-navbar {
+    display: flex;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    padding: 0 16px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    z-index: 1003;
+  }
+
+  .svg-icon {
+    color: var(--primary-color);
+    fill: var(--primary-color);
+  }
+
+  .mobile-logo {
+    height: 55px;
+    margin: 0 auto;
+    /* centra el logo */
+  }
+
+  .hamburger-btn {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  /* 2) Ocultar logo dentro del sidebar */
+  .sidebar-logo {
+    display: none;
+  }
+
+  /* 3) Sidebar por debajo del navbar */
+  .sidebar {
+    position: fixed;
+    top: 60px;
+    /* empuja abajo del navbar */
+    left: 0;
+    width: 100%;
+    flex-basis: auto;
+    height: calc(100% - 60px);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1002;
+    padding: 20px;
+  }
+
+  .sidebar-collapse-button {
+    display: none;
+  }
+
+  .sidebar.collapsed .menu-title,
+  .sidebar.collapsed .profile-title {
+    opacity: 1;
+    height: auto;
+    margin-bottom: 10px;
+    overflow: visible;
+    pointer-events: auto;
+  }
+
+  .sidebar.collapsed .menu-item {
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 15px;
+  }
+
+  .sidebar.collapsed .theme-toggle-wrapper {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+
+  .sidebar.collapsed .theme-toggle-text {
+    display: inline;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* 4) Ajustes internos del sidebar en mobile */
+  .sidebar-menu {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  /* 5) Mostrar overlay sólo en mobile, debajo del navbar */
+  .overlay {
+    display: block;
+    top: 60px;
+    height: calc(100% - 60px);
+    z-index: 1001;
+  }
+
+  /* 6) Mostrar botón “cerrar” (con hamburguesa invertida) */
+  .close-btn {
+    display: block;
+    color: #FAFAFA;
+  }
+}
+
+/* ============================
+     DESKTOP OVERRIDE
+     ============================ */
+@media (min-width: 769px) {
+
+  /* Asegura que al volver a desktop no quede overlay */
+  .overlay {
+    display: none !important;
+  }
+}

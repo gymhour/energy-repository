@@ -1,0 +1,356 @@
+@import url("../../../variables.css");
+
+.planes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.planes-header h2 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.planes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 16px;
+}
+
+.plan-card {
+    background: var(--background-color-distinct);
+    border-radius: 8px;
+    /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); */
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid var(--border-color);
+}
+
+.plan-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.plan-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.plan-id {
+    font-size: 0.875rem;
+    color: var(--text-color-distinct);
+}
+
+.plan-id-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.plan-copy-id {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-color);
+    color: var(--text-color-distinct);
+    cursor: pointer;
+    transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.plan-copy-id:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--background-hover-color);
+}
+
+.plan-desc {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    margin-bottom: 12px;
+}
+
+.plan-price {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 16px;
+}
+
+.plan-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.plan-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+}
+
+.plan-form-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: start;
+    align-items: stretch;
+    min-width: 0;
+}
+
+.plan-form-input-container label {
+    color: var(--text-color-distinct);
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.plan-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.38);
+}
+
+.plan-modal {
+    width: min(92vw, 720px);
+    max-height: min(88vh, 760px);
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-color);
+    color: var(--text-color);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+}
+
+.plan-modal .plan-form {
+    padding: 22px;
+}
+
+.plan-modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--background-color);
+}
+
+.plan-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+    line-height: 1.25;
+}
+
+.plan-modal-header span {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-color-distinct);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.plan-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-color-distinct);
+    color: var(--text-color-distinct);
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.plan-modal-close:hover {
+    border-color: rgba(218, 70, 50, 0.34);
+    background: var(--background-hover-color);
+    color: var(--text-color);
+}
+
+.plan-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.plan-form-field-wide {
+    grid-column: 1 / -1;
+}
+
+.plan-modal .custom-input-wrapper,
+.plan-modal .custom-dropdown {
+    width: 100% !important;
+    min-width: 0;
+}
+
+.plan-modal .custom-input,
+.plan-modal .custom-dropdown {
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background-color-distinct);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.plan-modal .custom-input:focus,
+.plan-modal .custom-dropdown:focus {
+    border-color: rgba(218, 70, 50, 0.48);
+    box-shadow: 0 0 0 3px rgba(218, 70, 50, 0.12);
+}
+
+.plan-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    width: fit-content;
+    color: var(--text-color);
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.plan-toggle-row .toggle-switch {
+    width: 40px;
+    height: 22px;
+}
+
+.plan-toggle-row .toggle-slider {
+    background: var(--background-color-distinct);
+    border: 1px solid var(--border-color);
+}
+
+.plan-toggle-row .toggle-slider::before {
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    bottom: 3px;
+    background: var(--text-color-distinct);
+}
+
+.plan-toggle-row .toggle-switch input:checked + .toggle-slider {
+    border-color: rgba(218, 70, 50, 0.34);
+    background: var(--background-hover-color);
+}
+
+.plan-toggle-row .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(18px);
+    background: var(--primary-color);
+}
+
+.plan-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.plan-modal-actions .primary-button,
+.plan-secondary-button {
+    min-height: 40px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.plan-modal-actions .primary-button {
+    border: 0;
+}
+
+.plan-secondary-button {
+    border: 1px solid var(--border-color);
+    background: var(--background-color-distinct);
+    color: var(--text-color);
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.plan-secondary-button:hover {
+    border-color: rgba(218, 70, 50, 0.28);
+    background: var(--background-hover-color);
+}
+
+@media (max-width: 700px) {
+    .planes-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .planes-header .primary-button {
+        width: 100%;
+    }
+
+    .planes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .plan-modal-overlay {
+        align-items: flex-end;
+        padding: 12px;
+    }
+
+    .plan-modal {
+        width: 100%;
+        max-height: 92vh;
+    }
+
+    .plan-modal .plan-form {
+        padding: 18px;
+    }
+
+    .plan-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .plan-toggle-row {
+        width: 100%;
+    }
+
+    .plan-modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .plan-modal-actions .primary-button,
+    .plan-secondary-button {
+        width: 100%;
+    }
+}

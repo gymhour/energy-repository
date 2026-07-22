@@ -1,0 +1,22 @@
+.theme-toggle-wrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: var(--text-color);
+    transition: background-color 0.3s;
+    gap: 10px;
+}
+
+/* .theme-toggle-wrapper:hover {
+    background-color: var(--background-hover-color);
+} */
+
+.theme-toggle-icon {
+    font-size: 1.2rem;
+    margin-right: 10px;
+}
+
+.theme-toggle-text {
+    font-size: 15px;
+    font-weight: 400;
+}

@@ -1,0 +1,937 @@
+@import url(../../../variables.css);
+
+.create-clase-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+}
+
+.clases-actividades-form-ctn {
+    width: 90%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.clases-actividades-form-title {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 26px;
+}
+
+.clases-actividades-form-title h2 {
+    color: var(--text-color);
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+}
+
+.create-clase-form form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 22px 24px;
+    width: 100%;
+}
+
+.create-clase-form .form-input-ctn {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+}
+
+.create-clase-form .form-input-ctn--full,
+.form-input-horarios,
+.clase-actividad-form-guardar-btn {
+    grid-column: 1 / -1;
+}
+
+.create-clase-form label,
+.form-input-horarios>label {
+    color: var(--text-color-distinct);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* ========== Controles base ========== */
+
+.create-clase-form form input,
+.create-clase-form form textarea {
+    background-color: var(--background-color);
+    border-radius: 8px;
+    width: 100%;
+    min-height: 40px;
+    padding: 13px 14px;
+    outline: none;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    font-size: 14px;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.create-clase-form form input:focus,
+.create-clase-form form textarea:focus,
+.create-clase-form form select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--background-hover-color);
+}
+
+.create-clase-form form textarea {
+    min-height: 140px;
+    resize: vertical;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.create-clase-form form select {
+    width: 100%;
+    min-width: 0;
+    min-height: 50px;
+    background-color: var(--background-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    outline: none;
+    color: var(--text-color);
+    font-size: 14px;
+    padding: 0 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.create-clase-form form select::-ms-expand {
+    display: none;
+}
+
+.create-clase-form form .submit-btn {
+    background-color: var(--primary-color);
+    padding: 12px 18px;
+    border: none;
+    outline: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    color: white;
+    transition: background-color .18s ease, transform .18s ease;
+}
+
+.create-clase-form form .submit-btn:hover {
+    background-color: var(--primary-color-hover);
+    transform: translateY(-1px);
+}
+
+/* ========== Tags entrenadores ========== */
+
+.selected-tags {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.selected-tags .tag {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border-color);
+    padding: 7px 9px;
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 13px;
+}
+
+.tag-close {
+    cursor: pointer;
+}
+
+/* ========== Imagen ========== */
+
+.preview-container img {
+    width: 100%;
+    max-width: 360px;
+    height: 190px;
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+/* ========== Horarios grid ========== */
+
+.form-input-horarios {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.horarios-builder-header,
+.horarios-preview-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.horarios-builder-header label {
+    display: block;
+    color: var(--text-color-distinct);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.horarios-builder-header p,
+.horarios-preview-header span {
+    margin: 0;
+    color: var(--text-color-distinct);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.horarios-pending-badge {
+    flex: 0 0 auto;
+    border: 1px solid var(--primary-color);
+    border-radius: 999px;
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 8px 10px;
+    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+.horarios-builder {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: color-mix(in srgb, var(--background-color) 88%, var(--background-color-distinct));
+}
+
+.horario-builder-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.horario-section-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.horario-section-title span,
+.horarios-preview-header strong,
+.preview-day-group h4 {
+    color: var(--text-color);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.horario-section-title small {
+    color: var(--text-color-distinct);
+    font-size: 12px;
+}
+
+.quick-pill-actions {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.quick-pill-actions button {
+    min-height: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 10px;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.quick-pill-actions button:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: var(--background-hover-color);
+}
+
+.pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.selector-pill {
+    min-height: 38px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0 14px;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+}
+
+.selector-pill:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: var(--background-hover-color);
+}
+
+.selector-pill.selected {
+    border-color: var(--primary-color);
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.horario-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    align-items: end;
+    gap: 12px;
+}
+
+.generated-start-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 132px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.generated-start-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0 12px;
+}
+
+.generated-empty-state {
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color-distinct);
+    font-size: 13px;
+    padding: 12px 14px;
+}
+
+.horarios-builder-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.horarios-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    background-color: var(--primary-color);
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 0 14px;
+    transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.horarios-action-btn:hover:not(:disabled) {
+    background-color: var(--primary-color-hover);
+    border-color: var(--primary-color-hover);
+    transform: translateY(-1px);
+}
+
+.horarios-action-btn.secondary {
+    background-color: var(--background-color);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.horarios-action-btn.secondary:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: var(--background-hover-color);
+}
+
+.horarios-action-btn:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.horarios-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.horarios-preview-header strong {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.horarios-empty-state {
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color-distinct);
+    font-size: 14px;
+    padding: 18px;
+    text-align: center;
+}
+
+.preview-day-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.preview-day-group h4 {
+    margin: 0;
+}
+
+.preview-slot-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+    gap: 8px;
+}
+
+.preview-slot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 76px auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 58px;
+    padding: 10px 10px 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: color-mix(in srgb, var(--background-color) 94%, var(--background-color-distinct));
+    transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+
+.preview-slot:hover {
+    border-color: color-mix(in srgb, var(--primary-color) 34%, var(--border-color));
+    background-color: var(--background-color);
+}
+
+.preview-slot.new {
+    border-color: color-mix(in srgb, var(--primary-color) 34%, var(--border-color));
+}
+
+.preview-slot.changed {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 26%, transparent) inset;
+}
+
+.preview-slot-time {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.preview-slot-time span {
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+.preview-slot-time small {
+    color: var(--text-color-distinct);
+    font-size: 11px;
+    line-height: 1.1;
+}
+
+.preview-slot-cupos {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-self: center;
+}
+
+.preview-slot-cupos label {
+    color: var(--text-color-distinct);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+}
+
+.preview-cupos-control {
+    display: flex;
+    align-items: center;
+}
+
+.preview-cupos-control input {
+    min-height: 32px;
+    height: 32px;
+    padding: 6px 4px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.preview-slot-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--text-color-distinct);
+    cursor: pointer;
+    opacity: .72;
+    transition: border-color .18s ease, color .18s ease, background-color .18s ease;
+}
+
+.preview-slot-remove:hover {
+    border-color: #dc3545;
+    color: #dc3545;
+    background-color: color-mix(in srgb, #dc3545 10%, transparent);
+    opacity: 1;
+}
+
+.preview-slot-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.preview-slot-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background-color: transparent;
+    color: var(--text-color-distinct);
+    cursor: pointer;
+    opacity: .72;
+    transition: border-color .18s ease, color .18s ease, background-color .18s ease;
+}
+
+.preview-slot-edit:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: var(--background-hover-color);
+    opacity: 1;
+}
+
+/* ─── Modal editar horario ─── */
+.edit-horario-resumen {
+    margin: 14px 0 0;
+    color: var(--text-color-distinct);
+    font-size: 14px;
+}
+
+.edit-horario-resumen strong {
+    color: var(--text-color);
+}
+
+.edit-horario-confirm-text {
+    margin: 16px 0 14px;
+    color: var(--text-color-distinct);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.edit-horario-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.edit-horario-option {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--background-color-distinct);
+    color: var(--text-color);
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color .18s ease, background-color .18s ease, transform .18s ease;
+}
+
+.edit-horario-option:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    background-color: var(--background-hover-color);
+    transform: translateY(-1px);
+}
+
+.edit-horario-option:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.edit-horario-option strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.edit-horario-option span {
+    color: var(--text-color-distinct);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.horario-item {
+    display: grid;
+    grid-template-columns: minmax(150px, 1.2fr) minmax(130px, 1fr) minmax(130px, 1fr) minmax(90px, .7fr) auto;
+    gap: 12px;
+    align-items: end;
+    margin: 0;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.form-input-ctn-horario {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.horario-item input {
+    min-width: 0;
+    height: 50px;
+}
+
+.close-icon {
+    width: 24px;
+    height: 24px;
+    align-self: end;
+    margin-bottom: 4px;
+    position: static;
+    cursor: pointer;
+}
+
+.row-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    min-height: 50px;
+}
+
+.row-actions .secondary-button,
+.clase-actividad-form-agg-horario-btn .secondary-button {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-weight: 500;
+}
+
+.row-actions .secondary-button:hover,
+.clase-actividad-form-agg-horario-btn .secondary-button:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: var(--background-hover-color);
+}
+
+.clase-actividad-form-agg-horario-btn {
+    margin-top: 2px;
+}
+
+.clase-actividad-form-guardar-btn {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.create-clase-form .custom-dropdown {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--background-color);
+    padding: 13px 34px 13px 14px;
+    font-size: 14px;
+}
+
+.create-clase-form .custom-dropdown:focus {
+    box-shadow: 0 0 0 3px var(--background-hover-color);
+}
+
+/* ========== Radios agrupados (si se usan fuera del modal) ========== */
+
+.radio-group {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.radio-group-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ========== Breakpoints ========== */
+
+/* 900px: 2 columnas en horarios, X  absolutizada */
+@media (max-width: 900px) {
+    .clases-actividades-form-ctn {
+        width: 94%;
+    }
+
+    .create-clase-form form {
+        grid-template-columns: 1fr;
+    }
+
+    .horario-item {
+        grid-template-columns: 1fr 1fr;
+        position: relative;
+        padding-top: 32px;
+    }
+
+    .horario-settings-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .horario-item .close-icon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 8px;
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* 600px: 1 columna y centrados botones */
+@media (max-width: 600px) {
+    .clases-actividades-form-ctn {
+        width: 100%;
+    }
+
+    .clases-actividades-form-title h2 {
+        font-size: 26px;
+    }
+
+    .horario-item {
+        grid-template-columns: 1fr;
+        position: relative;
+        padding-top: 32px;
+    }
+
+    .horarios-builder-header,
+    .horarios-preview-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .horarios-pending-badge {
+        width: fit-content;
+    }
+
+    .horarios-builder {
+        padding: 14px;
+    }
+
+    .horario-settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .selector-pill {
+        min-height: 40px;
+        padding: 0 12px;
+    }
+
+    .horario-section-title {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .quick-pill-actions {
+        justify-content: flex-start;
+    }
+
+    .horarios-builder-actions,
+    .horarios-action-btn {
+        width: 100%;
+    }
+
+    .preview-slot-list {
+        grid-template-columns: 1fr;
+    }
+
+    .horario-item .close-icon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 8px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .create-clase-form form select,
+    .horario-item input {
+        height: 52px;
+    }
+
+    .clase-actividad-form-agg-horario-btn,
+    .clase-actividad-form-guardar-btn {
+        width: 100%;
+        display: flex;
+        justify-content: stretch;
+        align-items: center;
+        margin-top: 8px;
+    }
+
+    .clase-actividad-form-agg-horario-btn .secondary-button,
+    .clase-actividad-form-guardar-btn .submit-btn {
+        width: 100%;
+    }
+}
+
+/* Modal */
+.editmode-explainer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+    --accent: var(--primary-color);
+    --accent-hover: var(--primary-color-hover);
+    --accent-60: color-mix(in srgb, var(--accent) 60%, transparent);
+    --accent-16: color-mix(in srgb, var(--accent) 16%, transparent);
+    --accent-10: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.editmode-option {
+    position: relative;
+    display: block;
+    cursor: pointer;
+}
+
+/* ocultamos el radio nativo (la card es el control) */
+.editmode-option>input[type="radio"] {
+    position: absolute;
+    inset: 0;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* tarjeta visual */
+.editmode-option>div {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
+    border: 1px solid rgba(255, 255, 255, .10);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, .45),
+        inset 0 1px 0 rgba(255, 255, 255, .07);
+    backdrop-filter: blur(6px);
+    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+    max-width: 420px;
+}
+
+/* hover */
+.editmode-option:hover>div {
+    transform: translateY(-1px);
+    border-color: var(--accent-60);
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, .55),
+        0 0 0 3px var(--accent-10) inset;
+}
+
+/* focus teclado */
+.editmode-option>input[type="radio"]:focus-visible+div {
+    outline: 2px solid var(--accent-hover);
+    outline-offset: 3px;
+}
+
+/* seleccionado */
+.editmode-option>input[type="radio"]:checked+div {
+    border-color: var(--accent);
+    box-shadow:
+        0 12px 28px rgba(0, 0, 0, .55),
+        0 0 0 3px var(--accent-16) inset;
+}
+
+/* tipografía interna */
+.editmode-option strong {
+    display: block;
+    font-size: 15px;
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+.editmode-option p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, .72);
+}
+
+/* Light Mode Overrides */
+[data-theme='light'] .editmode-option>div {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='light'] .editmode-option strong {
+    color: var(--text-color);
+}
+
+[data-theme='light'] .editmode-option p {
+    color: var(--text-color-distinct);
+}
+
+[data-theme='light'] .editmode-option:hover>div {
+    background: #f9f9f9;
+    border-color: var(--primary-color);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme='light'] .editmode-option>input[type="radio"]:checked+div {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+    box-shadow: 0 0 0 2px var(--primary-color) inset;
+}

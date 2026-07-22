@@ -1,0 +1,92 @@
+@import url(../../../variables.css);
+
+.clases-actividades-ctn {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.create-clase-title {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.clases-actividades-admin-page .create-clase-title h2 {
+    color: var(--text-color);
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+}
+
+.clases-actividades-admin-page .create-clase-title .primary-button {
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.clases-actividades-admin-page .create-clase-title .primary-button .icon {
+    width: 17px;
+    height: 17px;
+}
+
+.clases-actividades-admin-page .clases-list {
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.clases-actividades-admin-page .clase-link {
+    border-radius: 8px;
+}
+
+.clases-actividades-admin-page .clase-item {
+    position: relative;
+    width: 350px;
+    min-height: 200px;
+    border-radius: 20px;
+    padding: 18px;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.clases-actividades-admin-page .clase-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(218, 70, 50, 0.65);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+.clases-actividades-admin-page .clase-item h2 {
+    font-size: 21px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+    line-height: 1.15;
+}
+
+.clases-actividades-admin-page .clase-item p {
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+@media screen and (max-width: 500px) {
+    .create-clase-title {
+        align-items: center;
+        flex-direction: row;
+    }
+
+    .clases-actividades-admin-page .clases-list {
+        margin-top: 22px;
+    }
+}
+
+.clases-actividades-ctn .clases-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 1200px;
+    margin-top: 20px;
+
+}

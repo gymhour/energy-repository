@@ -1,0 +1,31 @@
+.turno-modal-form .cuotas-modal-grid {
+  gap: 16px;
+}
+
+.turno-modal-form .react-datepicker-wrapper,
+.turno-modal-form .react-datepicker__input-container {
+  width: 100%;
+}
+
+.turno-modal-form .cuotas-modal-actions {
+  margin-top: 2px;
+}
+
+.turno-user-option {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.turno-user-option span {
+  color: var(--text-color);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.turno-user-option small {
+  color: var(--text-color-distinct);
+  font-size: 12px;
+  line-height: 1.2;
+}

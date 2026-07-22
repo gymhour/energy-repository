@@ -1,0 +1,23 @@
+.attendance-status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.attendance-status-badge.allowed {
+  color: #0f8f52;
+  background: rgba(15, 143, 82, 0.08);
+  border-color: rgba(15, 143, 82, 0.18);
+}
+
+.attendance-status-badge.rejected {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.18);
+}

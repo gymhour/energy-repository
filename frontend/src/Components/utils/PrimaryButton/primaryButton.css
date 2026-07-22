@@ -1,0 +1,26 @@
+@import url(../../../variables.css);
+
+.primary-button {
+    padding: 10px;
+    background-color: none;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--primary-color);
+    color: #FAFAFA;
+    text-decoration: none;
+    width: fit-content;
+    font-size: 14px;
+    border-radius: 8px;
+    transition: all ease-in-out 150ms;
+}
+
+.primary-button:hover {
+    background-color: var(--primary-color-hover) ;
+}
+
+.icon {
+    width: 16px;
+    height: 16px;
+}

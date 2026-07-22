@@ -1,0 +1,338 @@
+@import url("../../../variables.css");
+
+.admin-inicio-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-inicio-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.download-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color);
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.download-pdf-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: var(--background-hover-color);
+}
+
+.download-pdf-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Contenedor de captura de cada gráfico para el PDF */
+.chart-capture {
+  background: var(--background-color);
+}
+
+.admin-inicio-header h2 {
+  color: var(--text-color);
+  letter-spacing: -0.5px;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.admin-inicio-eyebrow {
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 1.5rem;
+}
+
+.admin-kpi-card {
+  position: relative;
+  min-height: 142px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 25px;
+  background:
+    var(--admin-kpi-card-gradient),
+    var(--background-color-distinct);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease, background .18s ease;
+}
+
+.admin-kpi-card-action {
+  width: 100%;
+  border: 1px solid transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-kpi-card-action:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.admin-kpi-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 18px 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+  opacity: 0;
+  transition: opacity .18s ease;
+}
+
+.admin-kpi-card:hover {
+  border-color: var(--primary-color);
+  box-shadow:
+    inset 0 0 0 1px rgba(218, 70, 50, 0.12),
+    0 14px 34px rgba(0, 0, 0, 0.14);
+  transform: translateY(-2px);
+}
+
+.admin-kpi-card:hover::after {
+  opacity: .55;
+}
+
+.admin-kpi-card-header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-kpi-card-header svg {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+}
+
+.admin-kpi-card h3 {
+  margin: 0;
+  padding: 0;
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.month-label {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-color-distinct);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  opacity: .8;
+}
+
+.admin-kpi-card .value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-color);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.admin-kpi-count {
+  color: var(--text-color-distinct);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.chart-section {
+  margin-top: 50px;
+  /* padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0)),
+    var(--background-color-distinct); */
+}
+
+.chart-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.chart-section h3 {
+  margin: 3px 0 0;
+  color: var(--text-color);
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.custom-datepicker-mes {
+  width: 150px;
+  height: 48px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 0 12px;
+  outline: none;
+}
+
+.custom-datepicker-mes:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--background-hover-color);
+}
+
+.toggle-filters-button {
+  outline: none;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 15px;
+  font-weight: 500;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.toggle-filters-button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.toggle-filters-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.filters-container {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0 0 22px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+}
+
+.admin-inicio-filtros-inputs-ctn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-inicio-filtros-inputs-ctn label {
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-inicio-filtros-btns-ctn {
+  display: flex;
+  gap: 10px;
+}
+
+@media screen and (max-width: 500px) {
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-section {
+    padding: 16px;
+  }
+
+  .chart-section-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toggle-filters-button {
+    width: 100%;
+  }
+
+  .custom-datepicker-mes {
+    width: 100% !important;
+  }
+
+  .admin-inicio-filtros-inputs-ctn {
+    width: 100%;
+  }
+
+  .admin-inicio-filtros-btns-ctn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.icon-soft-grey {
+  color: var(--text-color-distinct);
+}
+
+/* Títulos de sección del dashboard (Finanzas / Socios) */
+.dashboard-section-title {
+  margin: 42px 0 4px;
+  color: var(--text-color);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+
+.dashboard-section-title .month-label {
+  display: inline;
+  margin-left: 6px;
+  font-size: 13px;
+}
+
+/* Subtítulo de cada gráfico dentro de Tendencias */
+.chart-subtitle {
+  margin: 34px 0 10px;
+  color: var(--text-color-distinct);
+  font-size: 15px;
+  font-weight: 600;
+}

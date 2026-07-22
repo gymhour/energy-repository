@@ -1,0 +1,170 @@
+@import url(../../../variables.css);
+
+.login-container {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-position: center;
+  background-size: cover;
+  position: relative;
+  isolation: isolate;
+}
+
+.login-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--login-overlay);
+  backdrop-filter: var(--login-backdrop-blur);
+  -webkit-backdrop-filter: var(--login-backdrop-blur);
+}
+
+.login-subcontainer {
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  width: min(420px, 92vw);
+  padding: 28px 26px;
+  background: var(--login-card-bg);
+  border: 1px solid var(--login-card-border);
+  border-radius: 18px;
+  box-shadow: var(--login-shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.form-container {
+  width: 100%;
+}
+
+.form-container form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.login-subcontainer input {
+  width: 100%;
+  color: var(--text-color);
+  background: var(--background-color);
+  border: 1px solid var(--login-input-border);
+  outline: none;
+  transition: all 0.2s ease;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.login-subcontainer input::placeholder {
+  color: var(--text-color-distinct);
+  opacity: 0.7;
+}
+
+.login-subcontainer input:focus {
+  border-color: var(--primary-color);
+  box-shadow: var(--login-input-focus-shadow);
+}
+
+.form-container form .btn-login {
+  background-color: var(--primary-color);
+  color: #FAFAFA;
+  padding: 12px 32px;
+  border: none;
+  outline: none;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all ease-in-out 150ms;
+  width: 100%;
+}
+
+.form-container form .btn-login:hover {
+  background-color: var(--primary-color-hover);
+}
+
+.form-container form .btn-login:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.form-container form .forgot-password-link {
+  font-size: 14px;
+  color: var(--text-color-distinct);
+  text-decoration: none;
+  align-self: center;
+  opacity: 0.85;
+}
+
+.form-container form .forgot-password-link:hover {
+  text-decoration: underline;
+  opacity: 1;
+}
+
+.our-logo-container {
+  font-size: 15px;
+  color: var(--text-color-distinct);
+  opacity: 0.85;
+  text-align: center;
+}
+
+/* -------- Modal cumple -------- */
+.birthday-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.birthday-modal {
+  background: var(--background-color);
+  border-radius: 16px;
+  padding: 24px 20px;
+  width: min(420px, 92vw);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.birthday-modal p {
+  color: var(--text-color-distinct);
+}
+
+.birthday-modal .btn-primary {
+  margin-top: 18px;
+  padding: 14px 40px;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background: var(--primary-color);
+  color: #fff;
+  transition: all ease-in-out 150ms;
+}
+
+.birthday-modal .btn-primary:hover {
+  background: var(--primary-color-hover);
+}
+
+@media screen and (max-width: 500px) {
+  .login-subcontainer {
+    padding: 22px 18px;
+    width: 92vw;
+  }
+
+  .form-container {
+    width: 100%;
+  }
+}

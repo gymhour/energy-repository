@@ -1,0 +1,65 @@
+@import url("../../variables.css");
+
+.turnos-card-ctn {
+    width: 100%;
+    max-width: 550px;
+    padding: 26px 15px;
+    display: grid;
+    grid-template-columns: auto auto auto;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--background-color-distinct);
+    border-radius: 12px;
+    font-size: 15px;
+}
+
+.turno-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+}
+
+.turnos-card-ctn .icon {
+    width: 20px;
+    height: 20px;
+}
+
+.turno-name,
+.turno-date {
+    text-align: start;
+}
+
+.turno-cancel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cancel-button {
+    background-color: transparent;
+    color: rgb(243, 102, 102);
+    cursor: pointer;
+    transition: all ease-in-out 200ms;
+    border: none;
+    outline: none;
+}
+
+.cancel-button:hover {
+    color: #bb4f4f;
+}
+
+.cancel-button-unavailable {
+    color: var(--text-muted, #8a8a8a);
+}
+
+.cancel-button-unavailable:hover {
+    color: var(--text-muted, #8a8a8a);
+}
+
+@media screen and (max-width: 500px) {
+    .turnos-card-ctn {
+        padding: 24px 12px;
+        font-size: 14px;
+    }
+}

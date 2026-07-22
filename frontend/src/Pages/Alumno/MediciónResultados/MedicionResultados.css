@@ -1,0 +1,145 @@
+@import url("../../../variables.css");
+
+.medicion-resultados-title {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 20px;
+}
+
+
+.medicion-resultados-title h2 {
+  margin-bottom: 0.5rem;
+}
+
+.medicion-resultados-title p {
+  font-size: 1rem;
+  color: var(--text-color-distinct);
+  margin-bottom: 2rem;
+}
+
+
+.med-resultados-ejercicios-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  max-width: 300px;
+}
+
+.med-resultados-ejercicios-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+/* Botón o link para "Agregar nuevo" */
+.btn-agregar-nuevo {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 6px;
+  border: 1px solid var(--light-grey);
+  font-size: 0.9rem;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.btn-agregar-nuevo:hover {
+  background-color: #333;
+  transform: scale(1.03);
+}
+
+/* Listado de tarjetas (ejercicios) */
+.med-resultados-ejercicios-list {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.med-resultados-card {
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  color: var(--text-color);
+  text-decoration: none;
+  /* transition: transform 0.2s, box-shadow 0.2s; */
+  transition: all ease-in-out 150ms;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-width: 300px;
+}
+
+.med-resultados-card:hover {
+  /* transform: scale(1.03); */
+  /* box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); */
+  background-color: var(--background-color-distinct);
+}
+
+.med-resultados-card-content {
+  text-align: center;
+}
+
+.med-resultados-card-header h3 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.med-resultados-card-header span {
+  font-size: 0.9rem;
+  color: var(--text-color-distinct);
+}
+
+/* Nombre del ejercicio */
+.med-resultados-card-body p {
+  margin-top: 0.75rem;
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.med-resultados-card {
+  position: relative;
+}
+
+.borrar-ejercicio-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  z-index: 500;
+  color: var(--text-color);
+}
+
+@media screen and (max-width: 500px) {
+
+  .med-resultados-card {
+    min-width: 100%;
+  }
+
+  .medicion-resultados-title {
+    justify-content: center;
+    align-self: center;
+    margin-bottom: 14px;
+  }
+
+  .med-resultados-ejercicios-header {
+    max-width: 100%;
+  }
+
+  .medicion-resultados-title h2,
+  .medicion-resultados-title p {
+    text-align: center;
+  }
+
+  .medicion-resultados-title p {
+    margin-bottom: 0px;
+  }
+
+}

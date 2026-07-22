@@ -1,0 +1,200 @@
+@import url("../../variables.css");
+
+.usuario-form-page {
+  width: 90%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.usuario-form-page h2 {
+  margin: 18px 0 28px;
+  color: var(--text-color);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.usuario-form-page > .secondary-button {
+  border: none;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.usuario-form-page > .secondary-button:hover {
+  /* border-color: var(--primary-color); */
+  color: var(--primary-color);
+  background-color: none;
+}
+
+.usuario-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 24px;
+  width: 100%;
+}
+
+.usuario-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.usuario-form-field--full,
+.usuario-form-actions {
+  grid-column: 1 / -1;
+}
+
+.usuario-form-field label,
+.usuario-form-toggle {
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.usuario-form .custom-input-wrapper,
+.usuario-form .custom-dropdown {
+  width: 100% !important;
+  min-width: 0;
+}
+
+.usuario-form input,
+.usuario-form .custom-dropdown,
+.usuario-form-textarea {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.usuario-form input {
+  padding: 13px 14px;
+}
+
+.usuario-form .custom-dropdown {
+  padding: 13px 34px 13px 14px;
+}
+
+.usuario-form input:focus,
+.usuario-form .custom-dropdown:focus,
+.usuario-form-textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--background-hover-color);
+}
+
+.usuario-form input[type="file"] {
+  border-style: dashed;
+  cursor: pointer;
+}
+
+.usuario-form-textarea {
+  min-height: 140px;
+  padding: 13px 14px;
+  resize: vertical;
+  font: inherit;
+  font-weight: 400;
+}
+
+.usuario-form-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.usuario-turnos-fijos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.usuario-turno-fijo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.usuario-turno-fijo-row .custom-dropdown,
+.usuario-turno-fijo-row .turno-fijo-select {
+  flex: 1 1 210px;
+  min-width: 0;
+}
+
+.usuario-form-help {
+  color: var(--text-color-distinct);
+  font-size: 13px;
+}
+
+.usuario-form-preview {
+  grid-column: 1 / -1;
+}
+
+.usuario-form-preview img {
+  width: 100%;
+  max-width: 280px;
+  height: 180px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.usuario-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.usuario-form-actions .primary-button {
+  min-height: 42px;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.usuario-form-actions .primary-button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+@media screen and (max-width: 900px) {
+  .usuario-form-page {
+    width: 94%;
+  }
+
+  .usuario-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .usuario-form-page {
+    width: 100%;
+  }
+
+  .usuario-form-page h2 {
+    font-size: 26px;
+  }
+
+  .usuario-form-actions {
+    justify-content: stretch;
+  }
+
+  .usuario-form-actions .primary-button {
+    width: 100%;
+  }
+}

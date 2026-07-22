@@ -1,0 +1,95 @@
+@import url("../../../variables.css");
+
+input {
+  background-color: var(--background-color-distinct);
+  border-radius: 12px;
+  padding: 16px 12px 16px 12px;
+  border: 1.5px solid var(--background-color-distinct);
+  outline: none;
+  color: var(--text-color);
+  font-size: 16px;
+  transition: all ease-in-out 150ms;
+}
+
+input:focus {
+  border: 1.5px solid var(--border-color);
+}
+
+.custom-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.custom-input {
+  width: 100%;
+  padding-right: 10px;
+  box-sizing: border-box;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 0.8rem;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-color-distinct);
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+}
+
+.eye-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff !important;
+  background-color: #252525 !important;
+  box-shadow: inset 0 0 0 1000px #252525 !important;
+  -webkit-box-shadow: inset 0 0 0 1000px #252525 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+@media screen and (max-width: 500px) {
+  .custom-input-wrapper {
+    width: 100% !important;
+  }
+
+  .cambiar-contrasena-campos {
+    align-items: center;
+  }
+}
+
+/* Estilos CSS campos de tipo file */
+input[type="file"] {
+  position: relative;
+  width: 100%;
+  border: 1.5px dashed var(--border-color);
+  color: var(--text-color);
+  border-radius: 12px;
+  padding: 16px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 1em;
+  border: none;
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--text-color);
+  font-weight: medium;
+  cursor: pointer;
+}

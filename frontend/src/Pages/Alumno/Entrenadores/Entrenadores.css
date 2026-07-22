@@ -1,0 +1,45 @@
+/* GRID GENERAL */
+.trainers-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* WRAPPER de cada item */
+.trainer-item {
+  /* ancho fijo en desktop */
+  flex: 0 0 295px;
+}
+
+/* La tarjeta dentro cubre el 100% del wrapper */
+.trainer-card {
+  width: 100%;
+  height: 300px;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+/* PROFESIÓN */
+.trainer-item .profesion {
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+/* MEDIA QUERY: pantallas ≤ 768px ⇒ 2 por fila */
+@media (max-width: 768px) {
+  .trainer-item {
+    /* (100% total − 1rem gap) / 2 */
+    flex: 0 0 calc((100% - 1rem) / 2);
+  }
+}
+
+/* MEDIA QUERY: pantallas muy pequeñas ≤ 480px ⇒ 1 por fila */
+@media (max-width: 480px) {
+  .trainer-item {
+    flex: 0 0 100%;
+  }
+  .trainers-grid {
+    gap: 2.5rem;
+  }
+}

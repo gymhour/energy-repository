@@ -1,0 +1,618 @@
+.page-layout .content-layout {
+    --gh-bg: var(--background-color);
+    --gh-surface: var(--background-color-distinct);
+    --gh-surface-2: var(--background-color);
+    --gh-border: var(--border-color);
+    --gh-text: var(--text-color);
+    --gh-muted: var(--text-color-distinct);
+    --gh-chip-bg: var(--background-color);
+    --gh-chip-border: var(--border-color);
+}
+
+.header-rutina {
+    padding: 20px 40px;
+}
+
+.rutina-detail-headerbar {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.rutina-detail-back-btn {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--gh-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.rutina-detail-back-btn:hover {
+    color: var(--gh-text);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.page-layout .content-layout .gh-title {
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    color: var(--gh-text);
+}
+
+.tab-dias {
+    padding: 0px 40px;
+}
+
+.page-layout .content-layout .gh-card,
+.page-layout .content-layout .gh-surface {
+    background: none;
+    border: 1px solid var(--gh-border);
+    color: var(--gh-text);
+    border-radius: 8px;
+    box-shadow: none;
+    padding: 16px;
+}
+
+.page-layout .content-layout .gh-muted {
+    color: var(--gh-muted);
+}
+
+.page-layout .content-layout .gh-feature-title {
+    color: var(--gh-text);
+}
+
+.page-layout .content-layout .gh-tabs-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.page-layout .content-layout .gh-tab {
+    appearance: none;
+    background: var(--gh-surface-2);
+    border: 1px solid var(--gh-border);
+    color: var(--gh-text);
+    padding: 8px 14px;
+    line-height: 1;
+    border-radius: 8px;
+    transition: border-color .15s ease, transform .15s ease, background .15s ease;
+}
+
+.page-layout .content-layout .gh-tab:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+    box-shadow: none;
+}
+
+.page-layout .content-layout .gh-tab.active {
+    background: color-mix(in srgb, var(--primary-color) 16%, var(--gh-surface-2));
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.page-layout .content-layout .gh-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+.rutina-detail-datos {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.rutina-detail-datos>.gh-surface {
+    flex: 1;
+}
+
+@media (max-width: 640px) {
+    .rutina-detail-datos {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (min-width: 960px) {
+    .page-layout .content-layout .gh-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.page-layout .content-layout .gh-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.page-layout .content-layout .gh-badge,
+.page-layout .content-layout .gh-chip {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--gh-chip-bg);
+    border: 1px solid var(--gh-chip-border);
+    color: var(--gh-text);
+}
+
+.page-layout .content-layout .gh-chip.success {
+    background: color-mix(in srgb, var(--primary-color) 18%, var(--gh-chip-bg));
+    border-color: color-mix(in srgb, var(--primary-color) 55%, var(--gh-chip-border));
+    color: color-mix(in srgb, var(--primary-color) 95%, #ffffff);
+}
+
+.page-layout .content-layout .gh-list-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: start;
+    gap: 12px;
+    background: var(--gh-surface-2);
+    border: 1px solid var(--gh-border);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: none;
+}
+
+.page-layout .content-layout .gh-list-item+.gh-list-item {
+    margin-top: 8px;
+}
+
+.page-layout .content-layout .gh-text.bold {
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .page-layout .content-layout .gh-list-item {
+        grid-template-columns: 1fr;
+    }
+}
+
+.page-layout .content-layout .gh-surface:hover,
+.page-layout .content-layout .gh-card:hover {
+    border-color: var(--gh-border);
+    box-shadow: none;
+}
+
+/* ======= Ejercicio row ======= */
+.page-layout .content-layout .gh-ej-row {
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+}
+
+/* Contenedor de media para reservar tamaño */
+.page-layout .content-layout .gh-media-slot {
+    width: 96px;
+    /* un poco más ancho para video */
+    min-width: 96px;
+    height: 64px;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--gh-surface);
+    border: 1px solid var(--gh-border);
+}
+
+/* Imagen fija */
+.page-layout .content-layout .gh-ej-thumb {
+    width: 96px;
+    height: 64px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Placeholder cuadrado redondeado */
+.page-layout .content-layout .gh-ej-thumb-placeholder {
+    width: 96px;
+    height: 64px;
+    border-radius: 8px;
+    background:
+        radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--primary-color) 12%, transparent) 0 23%, transparent 24%),
+        linear-gradient(135deg, color-mix(in srgb, var(--gh-surface) 82%, var(--gh-text) 4%), var(--gh-surface-2));
+    border: 1px solid color-mix(in srgb, var(--gh-border) 72%, transparent);
+    display: none;
+    place-items: center;
+    position: relative;
+}
+
+.page-layout .content-layout .gh-ej-thumb-placeholder.show {
+    display: grid;
+}
+
+.page-layout .content-layout .gh-ej-placeholder-mark {
+    width: 22px;
+    height: 22px;
+    border: 1px solid color-mix(in srgb, var(--gh-muted) 38%, transparent);
+    border-radius: 50%;
+    position: relative;
+}
+
+.page-layout .content-layout .gh-ej-placeholder-mark::before,
+.page-layout .content-layout .gh-ej-placeholder-mark::after {
+    content: "";
+    position: absolute;
+    background: color-mix(in srgb, var(--gh-muted) 48%, transparent);
+}
+
+.page-layout .content-layout .gh-ej-placeholder-mark::before {
+    width: 8px;
+    height: 1px;
+    left: 6px;
+    top: 10px;
+}
+
+.page-layout .content-layout .gh-ej-placeholder-mark::after {
+    width: 1px;
+    height: 8px;
+    left: 10px;
+    top: 6px;
+}
+
+/* Video / YouTube */
+.page-layout .content-layout .gh-ej-media.yt,
+.page-layout .content-layout .gh-ej-media.video {
+    width: 96px;
+    height: 64px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+}
+
+.page-layout .content-layout .gh-ej-iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+}
+
+.page-layout .content-layout .gh-ej-main {
+    display: grid;
+    gap: 6px;
+}
+
+.page-layout .content-layout .gh-ej-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.page-layout .content-layout .gh-ej-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--gh-muted);
+}
+
+.gh-label {
+    color: #929292;
+    margin-bottom: 8px;
+}
+
+.rutina-asignados-preview {
+    display: grid;
+    gap: 6px;
+}
+
+.rutina-asignados-preview strong {
+    font-weight: 600;
+}
+
+.rutina-asignados-modal-btn {
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--gh-text);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 400;
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--gh-text) 35%, transparent);
+    text-underline-offset: 3px;
+}
+
+.rutina-asignados-modal-btn:hover {
+    text-decoration-color: currentColor;
+}
+
+.rutina-asignados-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, .5);
+}
+
+.rutina-asignados-modal {
+    width: min(560px, 100%);
+    max-height: min(680px, calc(100vh - 40px));
+    overflow: hidden;
+    border: 1px solid var(--gh-border);
+    border-radius: 8px;
+    background: var(--gh-surface);
+    color: var(--gh-text);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .25);
+}
+
+.rutina-asignados-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--gh-border);
+}
+
+.rutina-asignados-modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.rutina-asignados-modal-close {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--gh-border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gh-text);
+    cursor: pointer;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.rutina-asignados-modal-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    max-height: calc(100vh - 150px);
+    overflow: auto;
+    padding: 18px 20px 22px;
+}
+
+.rutina-asignados-modal-content h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.rutina-asignados-modal-content ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rutina-asignados-modal-content li {
+    padding: 9px 10px;
+    border: 1px solid var(--gh-border);
+    border-radius: 8px;
+    background: var(--gh-surface-2);
+}
+
+.rutina-asignados-modal-content p {
+    margin: 0;
+    color: var(--gh-muted);
+}
+
+@media screen and (max-width: 500px) {
+    .header-rutina {
+        padding: 10px 16px;
+    }
+
+    .tab-dias {
+        padding: 15px 16px;
+    }
+
+    .rutina-detail-headerbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .rutina-asignados-modal-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dentro de tu RutinaDetail.css */
+.gh-media-slot .gh-ej-ytlink {
+    display: block;
+    position: relative;
+    width: 96px;
+    height: 64px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--gh-border);
+    background: #000;
+}
+
+.gh-media-slot .gh-ej-ytbadge {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    background: rgba(0, 0, 0, .6);
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+/* ==========================================
+   SOLO: Ejercicios como lista minimalista
+   (no toca tabs, paddings, surfaces generales)
+   ========================================== */
+
+/* 1) Cada ejercicio deja de ser "card dentro de card" */
+.page-layout .content-layout .gh-list-item.gh-ej-row {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 10px 0;
+}
+
+/* 2) Separador finito entre ejercicios */
+.page-layout .content-layout .gh-list-item.gh-ej-row+.gh-list-item.gh-ej-row {
+    margin-top: 0;
+    border-top: 1px solid var(--gh-border);
+}
+
+/* 3) Mantiene tu layout de 2 columnas en desktop, 1 en mobile */
+.page-layout .content-layout .gh-ej-row {
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+@media (max-width: 640px) {
+    .page-layout .content-layout .gh-list-item.gh-ej-row {
+        grid-template-columns: 1fr;
+        align-items: start;
+    }
+}
+
+/* 4) Miniatura más clean: sin borde duro ni sombra pesada */
+.page-layout .content-layout .gh-media-slot {
+    width: 96px;
+    min-width: 96px;
+    height: 64px;
+
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+
+    background: color-mix(in srgb, var(--gh-surface-2) 75%, var(--gh-text) 3%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gh-border) 55%, transparent);
+}
+
+/* 5) Imagen/video respetan el tamaño */
+.page-layout .content-layout .gh-ej-thumb,
+.page-layout .content-layout .gh-ej-media.yt,
+.page-layout .content-layout .gh-ej-media.video {
+    width: 96px;
+    height: 64px;
+    border-radius: 8px;
+}
+
+/* 6) Placeholder más prolijo */
+.page-layout .content-layout .gh-ej-thumb-placeholder {
+    width: 96px;
+    height: 64px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--gh-border) 72%, transparent);
+    background:
+        linear-gradient(135deg, transparent 0 46%, color-mix(in srgb, var(--gh-border) 42%, transparent) 47% 53%, transparent 54%),
+        linear-gradient(180deg, color-mix(in srgb, var(--gh-surface) 92%, var(--gh-text) 3%), var(--gh-surface-2));
+}
+
+/* 7) Tipografía dentro del item (no cambia tus títulos globales) */
+.page-layout .content-layout .gh-ej-main {
+    display: grid;
+    gap: 4px;
+}
+
+.page-layout .content-layout .gh-ej-info {
+    font-size: 13px;
+    color: var(--gh-muted);
+}
+
+/* 8) YouTube link mantiene estilo pero sin borde duro */
+.gh-media-slot .gh-ej-ytlink {
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.sheets-detail-wrapper {
+    padding: 0 40px 30px;
+}
+
+.sheets-detail-card {
+    width: 100%;
+    display: grid;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid var(--gh-border);
+    border-radius: 8px;
+    background: var(--gh-surface);
+}
+
+.sheets-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sheets-detail-header h3 {
+    margin: 0;
+    color: var(--gh-text);
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.sheets-detail-link {
+    white-space: nowrap;
+}
+
+.sheets-detail-frame {
+    width: 100%;
+    min-height: 420px;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border: 1px solid var(--gh-border);
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.sheets-detail-iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #ffffff;
+}
+
+@media screen and (max-width: 640px) {
+    .sheets-detail-wrapper {
+        padding: 0 16px 20px;
+    }
+
+    .sheets-detail-card {
+        padding: 14px;
+    }
+
+    .sheets-detail-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .sheets-detail-link {
+        width: fit-content;
+    }
+
+    .sheets-detail-frame {
+        min-height: 520px;
+        aspect-ratio: auto;
+    }
+}

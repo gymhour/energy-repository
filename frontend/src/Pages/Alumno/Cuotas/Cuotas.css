@@ -1,0 +1,61 @@
+.cuotas-datos-pagos {
+    padding: 30px 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    gap: 16px;
+}
+
+.cuotas-datos-pagos-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: start;
+    gap: 8px;
+}
+
+.alias-and-bank {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.cuotas-table-usuario {
+    margin-top: 20px;
+}
+
+.copy-button {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    color: var(--text-color-distinct);
+    margin-left: 5px;
+    position: relative;
+    top: 4px;
+    transition: all ease-in-out 150ms;
+}
+
+.copy-button:hover {
+    color: var(--primary-color);
+}
+
+.cuotas-wsp-btn {
+    background-color: #25D366;
+    color: white;
+    border-radius: 8px;
+    padding: 12px 24px;
+    outline: none;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all ease-in-out 150ms;
+}
+
+.cuotas-wsp-btn:hover {
+    background-color: #26b85c;
+}

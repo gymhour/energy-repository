@@ -1,0 +1,519 @@
+.rutina-asignada {
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 5px;
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.rutina-asignada strong {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.rutina-asignada-row {
+  min-height: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rutina-asignada-row.empty {
+  visibility: hidden;
+  display: none;
+}
+
+.asignado-img-usuario {
+  border-radius: 50px;
+}
+
+.rutina-asignada-user-data {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.rutinas-asignadas-page .rutinas-asignadas-title {
+  width: 100%;
+  max-width: none;
+  margin-bottom: 18px;
+}
+
+.rutinas-asignadas-page .rutinas-asignadas-title h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.rutinas-asignadas-page .mis-rutinas-list {
+  padding-top: 18px;
+  gap: 18px;
+}
+
+.rutinas-asignadas-page .rutina-card {
+  border: 1px solid var(--border-color);
+  transition: border-color .18s ease, background-color .18s ease;
+}
+
+.rutinas-asignadas-page .rutina-card:hover {
+  /* border-color: color-mix(in srgb, var(--primary-color) 42%, var(--border-color)); */
+  transform: scale(1.010);
+}
+
+.rutinas-asignadas-page .rutina-header {
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rutinas-asignadas-page .rutina-header h3 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.05;
+}
+
+.rutinas-asignadas-page .rutina-data {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 0;
+  color: var(--text-color-distinct);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.rutinas-asignadas-page .rutina-data p {
+  margin: 0;
+}
+
+.rutina-card-footer {
+  margin-top: 12px;
+}
+
+.rutinas-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+  color: var(--text-color-distinct);
+  font-size: 14px;
+}
+
+.rutinas-pagination-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color .18s ease, color .18s ease, background .18s ease, opacity .18s ease;
+}
+
+.rutinas-pagination-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--background-hover-color);
+}
+
+.rutinas-pagination-btn:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.rutinas-pagination-status {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.rutinas-pagination-status strong {
+  margin: 0 4px;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.rutinas-asignadas-filter-shell {
+  width: 100%;
+}
+
+.rutinas-asignadas-filter-trigger {
+  width: auto;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.rutinas-asignadas-filter-trigger:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--background-hover-color);
+}
+
+.rutinas-asignadas-filter-trigger > span,
+.rutinas-asignadas-filter-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rutinas-asignadas-filter-meta {
+  color: var(--text-color-distinct);
+}
+
+.rutinas-asignadas-filtro-ctn {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  align-items: end;
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.rutinas-asignadas-filtros-btns {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.rutinas-asignadas-filtros-btns .primary-button,
+.rutinas-asignadas-filtros-btns .secondary-button {
+  min-height: 40px;
+  border-radius: 8px;
+  padding: 9px 13px;
+  font-weight: 500;
+}
+
+.rutinas-asignadas-filtros-btns .secondary-button {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+}
+
+.rutinas-asignadas-filtros-btns .secondary-button:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: var(--background-hover-color);
+}
+
+.rutinas-asignadas-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rutinas-asignadas-filter-field > span {
+  color: var(--text-color-distinct);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.rutinas-asignadas-checkbox-ctn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-color);
+  padding: 0 0 2px;
+}
+
+.rutinas-asignadas-checkbox-ctn input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.rutinas-asignadas-checkbox-ctn label {
+  margin: 0;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rutinas-asignadas-page .rutina-header-acciones {
+  position: relative;
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.rutinas-asignadas-page .rutina-actions-trigger {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-color-distinct);
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.rutinas-asignadas-page .rutina-actions-trigger:hover,
+.rutinas-asignadas-page .rutina-actions-trigger[aria-expanded="true"] {
+  border-color: var(--border-color);
+  background: var(--background-color);
+  color: var(--text-color);
+}
+
+.rutinas-asignadas-page .rutina-actions-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  min-width: 156px;
+  padding: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+}
+
+.rutinas-asignadas-page .rutina-actions-menu button {
+  width: 100%;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.rutinas-asignadas-page .rutina-actions-menu button:hover {
+  background: var(--background-color-distinct);
+  color: var(--primary-color);
+}
+
+.rutinas-asignadas-page .rutina-actions-menu button.danger {
+  color: #ef4444;
+}
+
+.rutinas-asignadas-page .rutina-actions-menu button.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+@media screen and (max-width: 500px) {
+  .rutinas-asignadas-filtro-ctn {
+    grid-template-columns: 1fr;
+    margin-top: 18px;
+    padding: 16px;
+  }
+
+  .rutinas-asignadas-filtros-btns {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .rutinas-asignadas-filtros-btns .primary-button,
+  .rutinas-asignadas-filtros-btns .secondary-button {
+    width: 100%;
+  }
+
+  .rutinas-paginacion {
+    flex-wrap: wrap;
+  }
+
+  .rutinas-pagination-status {
+    order: -1;
+    width: 100%;
+  }
+
+  .rutinas-pagination-btn {
+    flex: 1;
+  }
+
+}
+
+.dropset-lines {
+  list-style: none;
+  padding-left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ==================================================== 
+   Premium Planilla Digital / Google Sheets styles
+   ==================================================== */
+.routine-badge.sheet-badge {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.26);
+  color: #059669;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  margin-left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: none;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.routine-badge.sheet-badge:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.42);
+}
+
+.sheet-quick-access {
+  background: rgba(16, 185, 129, 0.045);
+  border: 1px solid rgba(16, 185, 129, 0.26);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+.sheet-quick-access:hover {
+  background: rgba(16, 185, 129, 0.075);
+  border-color: rgba(16, 185, 129, 0.42);
+}
+
+.sheet-quick-copy {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sheet-quick-icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.10);
+  color: #10b981;
+}
+
+.sheet-quick-title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.sheet-quick-copy div > span {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.sheet-quick-btn {
+  width: 100%;
+  min-height: 40px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.sheet-quick-btn:hover {
+  border-color: #10b981;
+  color: #ffffff !important;
+  background: #10b981;
+}
+
+.sheet-quick-btn:active {
+  transform: translateY(1px);
+}
+
+@media screen and (max-width: 700px) {
+  .rutinas-asignadas-filter-shell {
+    width: 100%;
+  }
+
+  .sheet-quick-access {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .sheet-quick-btn {
+    width: 100%;
+  }
+}

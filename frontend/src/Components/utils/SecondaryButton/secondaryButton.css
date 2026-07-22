@@ -1,0 +1,47 @@
+@import url("../../../variables.css");
+
+.secondary-button {
+  padding: 10px;
+  background-color: none;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  text-decoration: none;
+  width: fit-content;
+  font-size: 14px;
+  transition: all ease-in-out 150ms;
+  border-radius: 12px;
+}
+
+.secondary-button:hover {
+  /* text-decoration: underline; */
+  background-color: var(--background-color-distinct);
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
+
+.secondary-button.reversed {
+  flex-direction: row-reverse;
+}
+
+/* Por defecto: íconos de contorno */
+.secondary-btn-icon * {
+  stroke: currentColor;
+  fill: none;
+  /* evita rellenos accidentales */
+}
+
+/* Si un ícono sí debe ir relleno */
+.secondary-btn-icon.allow-fill * {
+  fill: currentColor;
+}
+
+/* Blindaje extra: si el SVG trae fill="none", respetalo aunque haya estilos globales */
+.secondary-btn-icon [fill="none"] {
+  fill: none !important;
+}

@@ -1,0 +1,145 @@
+@import url("../../../variables.css");
+
+.inicio-bienvenida-ctn {
+  margin-bottom: 20px;
+}
+
+.turnos-ctn {
+  width: 550px;
+  max-width: 550px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.turnos-ctn-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.turnos-ctn-title h3 {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.inicio-clases-act-title {
+  margin-top: 30px;
+  width: 550px;
+  max-width: 550px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inicio-clases-act-title h3 {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.turnos-ctn-turnos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media screen and (max-width: 550px) {
+  .turnos-ctn {
+    width: auto;
+  }
+
+  .inicio-clases-act-title,
+  .turnos-ctn-title {
+    width: auto;
+    flex-wrap: wrap;
+  }
+
+  .inicio-bienvenida-ctn {
+    text-align: center;
+  }
+
+  .turnos-ctn-btn-agendar-nuevo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+  }
+}
+
+.cuota-reminder {
+  background: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.35);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.cuota-reminder__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cuota-reminder__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.cuota-reminder__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.cuota-reminder__close:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.cuota-reminder__message {
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
+  opacity: 0.95;
+}
+
+.cuota-reminder__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.cuota-reminder__item {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed rgba(255, 193, 7, 0.35);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.cuota-reminder__item-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.cuota-reminder__item-row+.cuota-reminder__item-row {
+  margin-top: 6px;
+}
+
+.cuota-reminder__actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
