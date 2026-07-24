@@ -53,8 +53,20 @@ export const requireRoles = (...roles: string[]) => {
   };
 };
 
-// Middleware específico pedido: admin OR entrenador
-export const isAdminOrEntrenador = requireRoles('admin', 'entrenador');
+// Roles del sistema. Se guardan en minúscula y sin acentos en User.tipo.
+export const ROLES = {
+  ADMIN: 'admin',
+  ENTRENADOR: 'entrenador',
+  RECEPCION: 'recepcion',
+  CLIENTE: 'cliente',
+} as const;
+
+// Área administrativa: todo lo que hace el admin salvo las finanzas del negocio
+// (dashboard de KPIs y gastos), que siguen protegidas por isAdmin.
+export const isAdminOrRecepcion = requireRoles(ROLES.ADMIN, ROLES.RECEPCION);
+
+// Cualquier miembro del staff (todos menos los clientes).
+export const isStaff = requireRoles(ROLES.ADMIN, ROLES.ENTRENADOR, ROLES.RECEPCION);
 
 // Mantengo la compatibilidad con tu middleware isAdmin previo
 export function isAdmin(req: Request, res: Response, next: NextFunction): void {
@@ -66,7 +78,7 @@ export function isAdmin(req: Request, res: Response, next: NextFunction): void {
   next();
 }
 
-// Ownership: el propio usuario (token.id === :id), o staff (admin/entrenador) que puede ver a todos.
+// Ownership: el propio usuario (token.id === :id), o staff que puede ver a todos.
 export function isSelfOrStaff(req: Request, res: Response, next: NextFunction): void {
   const user = req.user;
   if (!user) {
@@ -75,7 +87,7 @@ export function isSelfOrStaff(req: Request, res: Response, next: NextFunction): 
   }
   const targetId = Number.parseInt(req.params.id, 10);
   const tipo = String(user.tipo ?? '').toLowerCase();
-  const esStaff = tipo === 'admin' || tipo === 'entrenador';
+  const esStaff = tipo === ROLES.ADMIN || tipo === ROLES.ENTRENADOR || tipo === ROLES.RECEPCION;
   if (!esStaff && user.ID_Usuario !== targetId) {
     res.status(403).json({ error: 'Acceso denegado: solo podés consultar tu propia información' });
     return;
@@ -88,6 +100,7 @@ export const authServices = {
   authenticateToken,
   isAdmin,
   requireRoles,
-  isAdminOrEntrenador,
+  isAdminOrRecepcion,
+  isStaff,
   isSelfOrStaff
 };

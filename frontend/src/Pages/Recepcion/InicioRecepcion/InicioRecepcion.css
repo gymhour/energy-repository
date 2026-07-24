@@ -1,0 +1,160 @@
+@import url("../../../variables.css");
+
+.recepcion-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recepcion-header h2 {
+  color: var(--text-color);
+  letter-spacing: -0.5px;
+  font-size: 28px;
+  font-weight: 500;
+}
+
+.recepcion-fecha {
+  margin: 0;
+  color: var(--text-color-distinct);
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.recepcion-section-title {
+  margin: 40px 0 0;
+  color: var(--text-color);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* --- Accesos rápidos --- */
+.recepcion-shortcuts {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.recepcion-shortcut-item {
+  max-width: 300px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all ease-in-out 120ms;
+}
+
+.recepcion-shortcut-item:hover {
+  background-color: var(--background-hover-color);
+  border-color: var(--primary-color);
+}
+
+.recepcion-shortcut-link {
+  padding: 20px;
+  color: var(--text-color);
+  text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+/* --- Resumen del día --- */
+.recepcion-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.recepcion-kpi-card {
+  min-height: 130px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 25px;
+  background: var(--background-color-distinct);
+  box-shadow: inset 0 0 0 1px var(--border-color);
+  color: var(--text-color);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.recepcion-kpi-card-action:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+}
+
+.recepcion-kpi-card-action:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.recepcion-kpi-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.recepcion-kpi-card-header svg {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--background-color);
+  color: var(--medium-grey);
+}
+
+.recepcion-kpi-card h3 {
+  margin: 0;
+  padding: 0;
+  color: var(--text-color-distinct);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.recepcion-kpi-card .value {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* --- Últimos ingresos --- */
+.recepcion-ultimos-ingresos {
+  margin-top: 40px;
+}
+
+.recepcion-ultimos-ingresos-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.recepcion-ultimos-ingresos-title h3 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 20px;
+  font-weight: 500;
+}
+
+@media screen and (max-width: 500px) {
+  .recepcion-shortcut-item {
+    width: 100%;
+    max-width: 100%;
+  }
+}

@@ -31,6 +31,7 @@ import ResetPassword from './Pages/Auth/ResetPassword/ResetPassword';
 import ChangePassword from './Pages/Auth/ChangePassword/ChangePassword';
 import Cuotas from './Pages/Alumno/Cuotas/Cuotas';
 import InicioEntrenador from './Pages/Entrenador/InicioEntrenador/InicioEntrenador';
+import InicioRecepcion from './Pages/Recepcion/InicioRecepcion/InicioRecepcion';
 import RutinasAsignadas from './Pages/Entrenador/RutinasAsignadas/RutinasAsignadas';
 import { useLocation } from 'react-router-dom';
 import AsistenteChat from './Components/AsistenteChat/AsistenteChat';
@@ -98,9 +99,10 @@ function App() {
 
         {/* Rutas protegidas */}
         {/* Admin */}
+        {/* Sólo admin: el tablero expone los KPIs financieros del negocio. */}
         <Route path="/admin/inicio"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['admin']}>
               <AdminInicio />
             </ProtectedRoute>
           }
@@ -271,10 +273,11 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Sólo admin: salidas de dinero del negocio. */}
         <Route
           path="/admin/salidas-dinero"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute roles={['admin']}>
               <Gastos />
             </ProtectedRoute>
           }
@@ -295,6 +298,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Recepción: reusa las rutas /admin/* (salvo inicio y salidas-dinero) y sólo
+            suma su propio panel operativo. */}
+        <Route path="/recepcion/inicio"
+          element={
+            <ProtectedRoute>
+              <InicioRecepcion />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Entrenador */}
         <Route path="/entrenador/inicio"
           element={

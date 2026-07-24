@@ -1,10 +1,10 @@
 import express from "express";
 import { grupoUsuarioMethods } from "../controllers/grupoUsuario.Controller.js";
-import { authenticateToken, isAdminOrEntrenador } from "../services/auth.service.js";
+import { authenticateToken, isStaff } from "../services/auth.service.js";
 
 const grupoUsuarioRouter = express.Router();
 
-grupoUsuarioRouter.use(authenticateToken, isAdminOrEntrenador);
+grupoUsuarioRouter.use(authenticateToken, isStaff);
 
 grupoUsuarioRouter.get("/", grupoUsuarioMethods.getGruposUsuarios);
 grupoUsuarioRouter.post("/", grupoUsuarioMethods.createGrupoUsuario);

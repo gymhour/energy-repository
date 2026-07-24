@@ -9,6 +9,7 @@ import SecondaryButton from '../../../Components/utils/SecondaryButton/Secondary
 import { ArrowLeft } from 'lucide-react';
 import LoaderFullScreen from '../../../Components/utils/LoaderFullScreen/LoaderFullScreen';
 import '../UsuarioForm.css';
+import { ROLES, TIPOS_USUARIO, esRecepcion } from '../../../utils/roles';
 
 const DAY_ORDER = {
   domingo: 0, lunes: 1, martes: 2, miercoles: 3, miércoles: 3,
@@ -36,7 +37,7 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
     profesion: '',
     direc: '',
     tel: '',
-    tipo: 'Cliente',
+    tipo: ROLES.CLIENTE,
     fechaCumple: '',
     plan: '',
     estado: true,
@@ -52,7 +53,10 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
   const [clases, setClases] = useState([]);
   const [turnosFijos, setTurnosFijos] = useState([]);
 
-  const tipos = ['Cliente', 'Entrenador', 'Admin'];
+  // Espejo de la guarda del backend: recepción sólo puede asignar cliente o entrenador.
+  const tipos = esRecepcion()
+    ? TIPOS_USUARIO.filter(t => t.value === ROLES.CLIENTE || t.value === ROLES.ENTRENADOR)
+    : TIPOS_USUARIO;
   const opcionesEstado = ['Si', 'No'];
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -174,9 +178,7 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
           ? new Date(user.fechaCumple).toISOString().slice(0, 10)
           : '';
 
-        const tipoLower = (user?.tipo || '').toLowerCase();
-        const tipoCapitalizado =
-          tipoLower ? tipoLower.charAt(0).toUpperCase() + tipoLower.slice(1) : 'Cliente';
+        const tipoLower = (user?.tipo || '').toLowerCase() || ROLES.CLIENTE;
 
         // Nombre de plan si existe (API puede devolver { plan: { nombre, ID_Plan } } o solo ID)
         const planNombre =
@@ -192,11 +194,11 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
           profesion: user?.profesion || '',
           direc: user?.direc || '',
           tel: user?.tel || '',
-          tipo: tipoCapitalizado,
+          tipo: tipoLower,
           fechaCumple: fechaISO,
           estado: !!user?.estado,
           usaTurnosFijos: !!user?.usaTurnosFijos,
-          plan: tipoLower === 'cliente' ? planNombre : '',
+          plan: tipoLower === ROLES.CLIENTE ? planNombre : '',
           observacionesSalud: user?.observacionesSalud || '',
           fichaMedicaUrl: user?.fichaMedicaUrl || ''
         });
@@ -258,7 +260,7 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
         : '';
 
       const selectedPlan = planOptions.find(p => p.label === formData.plan);
-      if (formData.tipo === 'Cliente' && !formData.dni.trim()) {
+      if (formData.tipo === ROLES.CLIENTE && !formData.dni.trim()) {
         toast.error('Ingresá el DNI del alumno');
         setIsLoading(false);
         return;
@@ -271,17 +273,17 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
       payload.append('apellido', formData.apellido);
       payload.append('direc', formData.direc);
       payload.append('tel', formData.tel);
-      payload.append('tipo', formData.tipo.toLowerCase());
+      payload.append('tipo', formData.tipo);
       payload.append('fechaCumple', isoFecha);
       payload.append('observacionesSalud', formData.observacionesSalud.trim());
       payload.append('fichaMedicaUrl', formData.fichaMedicaUrl.trim());
 
-      if (formData.tipo === 'Cliente' && selectedPlan) {
+      if (formData.tipo === ROLES.CLIENTE && selectedPlan) {
         payload.append('ID_Plan', selectedPlan.value);
       }
 
       payload.append('usaTurnosFijos', String(formData.usaTurnosFijos));
-      if (formData.tipo === 'Cliente') {
+      if (formData.tipo === ROLES.CLIENTE) {
         const uniqueTurnos = turnosFijos.map(t => t.horarioId).filter(Boolean);
         if (formData.usaTurnosFijos && uniqueTurnos.length === 0) {
           toast.error('Seleccioná al menos un turno fijo');
@@ -291,7 +293,7 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
         payload.append('turnosFijos', JSON.stringify(formData.usaTurnosFijos ? uniqueTurnos : []));
       }
 
-      if (formData.tipo === 'Entrenador' && formData.profesion) {
+      if (formData.tipo === ROLES.ENTRENADOR && formData.profesion) {
         payload.append('profesion', formData.profesion);
       }
 
@@ -396,7 +398,7 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
               />
             </div>
 
-            {formData.tipo === 'Cliente' && (
+            {formData.tipo === ROLES.CLIENTE && (
               <div className="usuario-form-field usuario-form-field--full">
                 <label htmlFor="plan">Plan</label>
                 <CustomDropdown
@@ -497,7 +499,7 @@ const EditarUsuario = ({fromAdmin, fromEntrenador}) => {
               </div>
             )}
 
-            {formData.tipo === 'Entrenador' && (
+            {formData.tipo === ROLES.ENTRENADOR && (
               <div className="usuario-form-field">
                 <label htmlFor="profesion">Profesión</label>
                 <CustomInput

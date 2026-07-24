@@ -15,6 +15,7 @@ import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, X, UserPlus, Upload,
 import ReprogramarTurnoModal from '../../../Components/utils/ReprogramarTurnoModal/ReprogramarTurnoModal';
 import CustomInput from '../../../Components/utils/CustomInput/CustomInput';
 import ImportUsuariosModal from './ImportUsuariosModal';
+import { ROLES, TIPOS_USUARIO, esRecepcion, labelDeTipo } from '../../../utils/roles';
 
 // Motivos de baja (debe coincidir con la whitelist del backend en user.Controller.ts)
 const MOTIVOS_BAJA = [
@@ -55,12 +56,14 @@ const normalizeTextFilters = (filters) => ({
 
 const emptyUsuariosFilters = { tipo: '', nombre: '', apellido: '', email: '', estado: '', dni: '', plan: '', movimiento: '', movimientoMes: '' };
 
+// Espejo de la guarda del backend: recepción no puede editar cuentas de administrador.
+const puedeGestionar = (usuario) => (
+  !(esRecepcion() && String(usuario?.tipo || '').toLowerCase() === ROLES.ADMIN)
+);
+
 const normalizeTipoParam = (value) => {
   const normalized = String(value || '').toLowerCase();
-  if (normalized === 'cliente') return 'Cliente';
-  if (normalized === 'entrenador') return 'Entrenador';
-  if (normalized === 'admin') return 'Admin';
-  return '';
+  return TIPOS_USUARIO.some(t => t.value === normalized) ? normalized : '';
 };
 
 const normalizeEstadoParam = (value) => {
@@ -139,7 +142,9 @@ const UsuariosList = ({ fromAdmin, fromEntrenador }) => {
   const [hasMore, setHasMore] = useState(true);
 
   const defaultAvatar = "https://..."; // tu URL
-  const opcionesTipo = fromAdmin ? ['Cliente', 'Entrenador', 'Admin'] : ['Cliente'];
+  const opcionesTipo = fromAdmin
+    ? TIPOS_USUARIO
+    : TIPOS_USUARIO.filter(t => t.value === ROLES.CLIENTE);
   const opcionesEstado = ['Activo', 'Inactivo'];
   const [planesList, setPlanesList] = useState([]);
 
@@ -156,7 +161,7 @@ const UsuariosList = ({ fromAdmin, fromEntrenador }) => {
     try {
       const params = {};
       const activeFilters = normalizeTextFilters(filtros);
-      if (activeFilters.tipo) params.tipo = activeFilters.tipo.toLowerCase(); // normalizo
+      if (activeFilters.tipo) params.tipo = activeFilters.tipo; // TIPOS_USUARIO ya guarda el valor normalizado
       if (activeFilters.nombre) params.nombre = activeFilters.nombre;
       if (activeFilters.apellido) params.apellido = activeFilters.apellido;
       if (activeFilters.email) params.email = activeFilters.email;
@@ -595,14 +600,17 @@ const UsuariosList = ({ fromAdmin, fromEntrenador }) => {
           <div className="usuarios-page-actions">
             <PrimaryButton
               text="Crear usuario"
-              linkTo="/admin/crear-usuario"
+              linkTo={fromEntrenador ? "/entrenador/crear-usuario" : "/admin/crear-usuario"}
               icon={UserPlus}
             />
-            <SecondaryButton
-              text="Importar usuarios"
-              onClick={() => setShowImportModal(true)}
-              icon={Upload}
-            />
+            {/* La importación masiva es de admin y recepción (POST /usuarios/import). */}
+            {!fromEntrenador && (
+              <SecondaryButton
+                text="Importar usuarios"
+                onClick={() => setShowImportModal(true)}
+                icon={Upload}
+              />
+            )}
           </div>
         </div>
 
@@ -778,7 +786,7 @@ const UsuariosList = ({ fromAdmin, fromEntrenador }) => {
 
                     <td data-label="DNI">{u.dni || '—'}</td>
 
-                    <td data-label="Tipo" style={{ textTransform: 'capitalize' }}>{u.tipo}</td>
+                    <td data-label="Tipo">{labelDeTipo(u.tipo) || u.tipo}</td>
 
                     <td data-label="Plan" style={{ textTransform: 'capitalize' }}>
                       {u.plan?.nombre || '—'}
@@ -833,7 +841,7 @@ const UsuariosList = ({ fromAdmin, fromEntrenador }) => {
                                 onClick={() => openEstadoPopup(u)}
                               />
                           )}
-                        {fromAdmin && (
+                        {fromAdmin && puedeGestionar(u) && (
                           <PrimaryButton
                             text="Editar"
                             linkTo={`/admin/editar-usuario/${u.ID_Usuario}`}

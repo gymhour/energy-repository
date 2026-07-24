@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 const HOME_BY_ROLE = {
   admin: '/admin/inicio',
   entrenador: '/entrenador/inicio',
+  recepcion: '/recepcion/inicio',
   cliente: '/alumno/inicio',
 };
 
@@ -14,8 +15,12 @@ const HOME_BY_ROLE = {
 // Solo restringimos las áreas de admin/entrenador (las sensibles). El área de alumno queda
 // abierta a cualquier usuario autenticado para no bloquear cuentas con 'tipo' en variantes de
 // casing (ej. 'Cliente'); el objetivo es mantener a los alumnos FUERA de admin/entrenador.
+// Recepción comparte las URLs /admin/* con el admin (ver App.js). Las dos vistas que NO
+// puede ver — /admin/inicio y /admin/salidas-dinero — declaran roles={['admin']} en su
+// <Route>, y ese prop explícito le gana al prefijo.
 const ROLES_BY_PREFIX = [
-  { prefix: '/admin', roles: ['admin'] },
+  { prefix: '/admin', roles: ['admin', 'recepcion'] },
+  { prefix: '/recepcion', roles: ['admin', 'recepcion'] },
   { prefix: '/entrenador', roles: ['admin', 'entrenador'] },
 ];
 

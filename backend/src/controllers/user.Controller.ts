@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { Request, Response } from "express";
 import prisma from "../models/Prisma.js";
+import { ROLES } from "../services/auth.service.js";
 import { deleteImage, getImageUrl, uploadImageBuffer } from "../services/cloudinary.service.js";
 import { sendWelcomeEmail } from "../services/email.service.js";
 import { hashPassword } from "../services/password.service.js";
@@ -89,6 +90,73 @@ const MOTIVO_ALTA_DEFAULT = 'Otro / Sin motivo';
 const parseMotivoAlta = (value: unknown): string | null => (
     typeof value === 'string' && (MOTIVOS_ALTA as readonly string[]).includes(value) ? value : null
 );
+
+// ---------------------------------------------------------------------------
+// Guardas de escalada de privilegios para los roles que no son admin.
+// Recepción comparte casi toda el área administrativa con el admin, así que sin
+// estas guardas podría crearse (o convertirse en) un usuario admin y ver las
+// finanzas del negocio que justamente le estamos ocultando. El entrenador da de
+// alta socios, y nada más.
+// El admin no figura acá: no tiene restricciones.
+// ---------------------------------------------------------------------------
+const TIPOS_ASIGNABLES: Record<string, string[]> = {
+    [ROLES.RECEPCION]: [ROLES.CLIENTE, ROLES.ENTRENADOR],
+    [ROLES.ENTRENADOR]: [ROLES.CLIENTE],
+};
+
+const normalizarTipo = (value: unknown): string => String(value ?? '').trim().toLowerCase();
+
+// El valor del rol va sin tilde (matchea el JWT); estas son las etiquetas para mostrar.
+const ETIQUETA_ROL: Record<string, string> = { [ROLES.RECEPCION]: 'recepción' };
+
+const errorTipoNoPermitido = (rol: string, permitidos: string[]): string => (
+    `Acceso denegado: ${ETIQUETA_ROL[rol] ?? rol} sólo puede asignar ${permitidos.length > 1 ? 'los tipos' : 'el tipo'} ${permitidos.join(' o ')}`
+);
+
+/**
+ * Valida que `requester` pueda asignar el tipo `tipoDestino` en una actualización.
+ * Un tipo vacío significa "no se cambia", así que se permite.
+ * Devuelve un mensaje de error si no puede, o null si está permitido.
+ */
+const validarTipoAsignable = (requesterTipo: unknown, tipoDestino: unknown): string | null => {
+    const rol = normalizarTipo(requesterTipo);
+    const permitidos = TIPOS_ASIGNABLES[rol];
+    if (!permitidos) return null;
+
+    const destino = normalizarTipo(tipoDestino);
+    if (!destino) return null; // no viene en el body: no se cambia el tipo
+
+    return permitidos.includes(destino) ? null : errorTipoNoPermitido(rol, permitidos);
+};
+
+/**
+ * Igual que validarTipoAsignable pero para el alta: el tipo es obligatorio, así
+ * que omitirlo no puede usarse para crear un usuario sin rol definido.
+ */
+const validarTipoAlCrear = (requesterTipo: unknown, tipoDestino: unknown): string | null => {
+    const rol = normalizarTipo(requesterTipo);
+    const permitidos = TIPOS_ASIGNABLES[rol];
+    if (!permitidos) return null;
+
+    return permitidos.includes(normalizarTipo(tipoDestino))
+        ? null
+        : errorTipoNoPermitido(rol, permitidos);
+};
+
+/**
+ * Valida que `requester` pueda modificar/eliminar al usuario destino.
+ * Nadie fuera del admin puede tocar cuentas de admin (si no, recepción o un
+ * entrenador podrían cambiarle el email y la contraseña a un admin y quedarse
+ * con esa cuenta).
+ */
+const validarUsuarioModificable = (requesterTipo: unknown, tipoUsuarioDestino: unknown): string | null => {
+    const rol = normalizarTipo(requesterTipo);
+    if (rol === ROLES.ADMIN || !TIPOS_ASIGNABLES[rol]) return null;
+    if (normalizarTipo(tipoUsuarioDestino) === ROLES.ADMIN) {
+        return `Acceso denegado: ${ETIQUETA_ROL[rol] ?? rol} no puede modificar cuentas de administrador`;
+    }
+    return null;
+};
 
 const parseMonthRangeUTC = (value: unknown): { gte: Date; lt: Date } | null => {
     const match = String(value || '').match(/^(\d{4})-(\d{2})$/);
@@ -285,6 +353,11 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 
         if (!email || !password) {
             res.status(400).json({ message: 'Email y password son obligatorios' });
+            return;
+        }
+        const errorTipo = validarTipoAlCrear(req.user?.tipo, tipo);
+        if (errorTipo) {
+            res.status(403).json({ message: errorTipo });
             return;
         }
         // Convertir ID_Plan a número
@@ -731,6 +804,26 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     const file = req.file;
 
     try {
+        // 0) Guardas de rol: recepción no puede tocar admins ni ascender a nadie a admin
+        const destino = await prisma.user.findUnique({
+            where: { ID_Usuario: id },
+            select: { tipo: true }
+        });
+        if (!destino) {
+            res.status(404).json({ message: 'Usuario no encontrado' });
+            return;
+        }
+        const errorDestino = validarUsuarioModificable(req.user?.tipo, destino.tipo);
+        if (errorDestino) {
+            res.status(403).json({ message: errorDestino });
+            return;
+        }
+        const errorTipo = validarTipoAsignable(req.user?.tipo, tipo);
+        if (errorTipo) {
+            res.status(403).json({ message: errorTipo });
+            return;
+        }
+
         // 1) Build data to update
         const data: any = {};
         if (email) data.email = email;
@@ -882,7 +975,9 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
             res.status(404).json({ message: 'Usuario no encontrado' });
             return;
         }
-        if (user.tipo === 'Admin') {
+        // Los tipos se guardan en minúscula: comparar normalizado (antes comparaba
+        // contra 'Admin' y la guarda nunca se disparaba).
+        if (normalizarTipo(user.tipo) === ROLES.ADMIN) {
             res.status(403).json({ message: 'No se puede eliminar un admin' });
             return;
         }
@@ -915,10 +1010,17 @@ const estadoUser = async (req: Request, res: Response): Promise<void> => {
         // 3) Lee el estado actual para registrar el movimiento sólo si realmente cambia
         const actual = await prisma.user.findUnique({
             where: { ID_Usuario },
-            select: { estado: true }
+            select: { estado: true, tipo: true }
         });
         if (!actual) {
             res.status(404).json({ message: "Usuario no encontrado" });
+            return;
+        }
+
+        // Recepción no puede dar de baja a un admin
+        const errorDestino = validarUsuarioModificable(req.user?.tipo, actual.tipo);
+        if (errorDestino) {
+            res.status(403).json({ message: errorDestino });
             return;
         }
 

@@ -92,7 +92,8 @@ const Login = () => {
       const targetRoute =
         tipoNormalized === 'admin' ? '/admin/inicio'
           : tipoNormalized === 'entrenador' ? '/entrenador/inicio'
-            : '/alumno/inicio';
+            : tipoNormalized === 'recepcion' ? '/recepcion/inicio'
+              : '/alumno/inicio';
 
       // Control de cumpleaños: si es su cumpleaños y no lo descartó hoy, mostramos modal
       const userId = decodedToken.id;

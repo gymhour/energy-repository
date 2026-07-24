@@ -38,8 +38,13 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 // Componentes
 import ConfirmationPopup from "../utils/ConfirmationPopUp/ConfirmationPopUp";
 import ThemeToggle from "../utils/ThemeToggle/ThemeToggle";
+import { esRecepcion } from "../../utils/roles";
 
 const SidebarMenu = ({ isAdmin, isEntrenador }) => {
+  // Recepción navega las mismas páginas que el admin (llegan con isAdmin={true}), así que
+  // el rol real se lee del token en vez de agregar un prop a las ~18 páginas que lo montan.
+  const esRecep = esRecepcion();
+  const inicioAdminPath = esRecep ? "/recepcion/inicio" : "/admin/inicio";
   const navigate = useNavigate();
   const location = useLocation();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
@@ -172,8 +177,8 @@ const SidebarMenu = ({ isAdmin, isEntrenador }) => {
               isAdmin ? (
                 <>
                   <Link
-                    to="/admin/inicio"
-                    className={`menu-link ${location.pathname === "/admin/inicio"
+                    to={inicioAdminPath}
+                    className={`menu-link ${location.pathname === inicioAdminPath
                       ? "active"
                       : ""
                       }`}
@@ -299,18 +304,21 @@ const SidebarMenu = ({ isAdmin, isEntrenador }) => {
                       Cuotas
                     </li>
                   </Link>
-                  <Link
-                    to="/admin/salidas-dinero"
-                    className={`menu-link ${location.pathname === "/admin/salidas-dinero"
-                      ? "active"
-                      : ""
-                      }`}
-                  >
-                    <li className="menu-item">
-                      <TrendingDown className="icon" />{" "}
-                      Salidas de dinero
-                    </li>
-                  </Link>
+                  {/* Salidas de dinero: información financiera del negocio, sólo admin. */}
+                  {!esRecep && (
+                    <Link
+                      to="/admin/salidas-dinero"
+                      className={`menu-link ${location.pathname === "/admin/salidas-dinero"
+                        ? "active"
+                        : ""
+                        }`}
+                    >
+                      <li className="menu-item">
+                        <TrendingDown className="icon" />{" "}
+                        Salidas de dinero
+                      </li>
+                    </Link>
+                  )}
                   <Link
                     to="/admin/ingreso"
                     className={`menu-link ${location.pathname === "/admin/ingreso"

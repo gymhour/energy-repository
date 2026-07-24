@@ -27,11 +27,11 @@ asistenciaRoutes.get(
   asistenciaMethods.obtenerMisAsistencias
 );
 
-// 3. Obtener bitácora/historial de ingresos (Solo Administradores o Entrenadores)
+// 3. Obtener bitácora/historial de ingresos (Solo staff: admin, entrenador o recepción)
 asistenciaRoutes.get(
   '/historial',
   authServices.authenticateToken,
-  authServices.isAdminOrEntrenador,
+  authServices.isStaff,
   asistenciaMethods.obtenerHistorialAsistencias
 );
 

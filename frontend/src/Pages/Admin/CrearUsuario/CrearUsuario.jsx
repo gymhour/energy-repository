@@ -10,6 +10,7 @@ import CustomInput from '../../../Components/utils/CustomInput/CustomInput';
 import '../UsuarioForm.css';
 import SecondaryButton from '../../../Components/utils/SecondaryButton/SecondaryButton';
 import { ArrowLeft } from 'lucide-react';
+import { ROLES, TIPOS_USUARIO, getRolActual } from '../../../utils/roles';
 
 const DAY_ORDER = {
   domingo: 0, lunes: 1, martes: 2, miercoles: 3, miércoles: 3,
@@ -213,7 +214,7 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
 
       // Valido plan si es Cliente
       let idPlan = null;
-      if (formData.tipo === 'Cliente') {
+      if (formData.tipo === ROLES.CLIENTE) {
         if (!formData.dni.trim()) {
           toast.error('Ingresá el DNI del alumno');
           setIsLoading(false);
@@ -236,7 +237,7 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
       payload.append('apellido', formData.apellido.trim());
       payload.append('direc', formData.direc.trim());
       payload.append('tel', formData.tel.trim());
-      payload.append('tipo', formData.tipo ? formData.tipo.toLowerCase() : '');
+      payload.append('tipo', formData.tipo || '');
       payload.append('fechaCumple', isoFecha);
       payload.append('observacionesSalud', formData.observacionesSalud.trim());
       payload.append('fichaMedicaUrl', formData.fichaMedicaUrl.trim());
@@ -253,7 +254,7 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
         }
         payload.append('turnosFijos', JSON.stringify(uniqueTurnos));
       }
-      if (formData.tipo === 'Entrenador' && formData.profesion) {
+      if (formData.tipo === ROLES.ENTRENADOR && formData.profesion) {
         payload.append('profesion', formData.profesion.trim());
       }
       if (avatarFile) {
@@ -269,7 +270,7 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
       setTurnosFijos([]);
       setAvatarFile(null);
       setAvatarPreview("");
-      navigate("/admin/usuarios");
+      navigate(fromEntrenador ? "/entrenador/usuarios" : "/admin/usuarios");
     } catch (error) {
       console.error(error);
       const msg = error?.response?.data?.message || 'No se pudo registrar el usuario';
@@ -279,7 +280,15 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
     }
   };
 
-  const tipos = ['Cliente', 'Entrenador', 'Admin'];
+  // Espejo de la guarda del backend (TIPOS_ASIGNABLES en user.Controller.ts):
+  // entrenador da de alta sólo socios; recepción, socios y entrenadores.
+  const tiposAsignables = {
+    [ROLES.ENTRENADOR]: [ROLES.CLIENTE],
+    [ROLES.RECEPCION]: [ROLES.CLIENTE, ROLES.ENTRENADOR],
+  }[getRolActual()];
+  const tipos = tiposAsignables
+    ? TIPOS_USUARIO.filter(t => tiposAsignables.includes(t.value))
+    : TIPOS_USUARIO;
 
   return (
     <div className="page-layout">
@@ -289,7 +298,7 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
         <div className="usuario-form-page">
           <SecondaryButton
             text="Volver atrás"
-            linkTo="/admin/usuarios"
+            linkTo={fromEntrenador ? "/entrenador/usuarios" : "/admin/usuarios"}
             icon={ArrowLeft}
             reversed={true}
           />
@@ -356,7 +365,7 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
               />
             </div>
 
-          {formData.tipo === 'Cliente' && (
+          {formData.tipo === ROLES.CLIENTE && (
             <div className="usuario-form-field usuario-form-field--full">
               <label htmlFor="plan">Plan</label>
               <CustomDropdown
@@ -464,7 +473,7 @@ const CrearUsuario = ({fromAdmin, fromEntrenador}) => {
             </div>
           )}
 
-          {formData.tipo === 'Entrenador' && (
+          {formData.tipo === ROLES.ENTRENADOR && (
             <div className="usuario-form-field">
               <label htmlFor="profesion">Profesión</label>
               <CustomInput
