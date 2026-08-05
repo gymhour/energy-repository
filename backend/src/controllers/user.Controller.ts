@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { Request, Response } from "express";
 import prisma from "../models/Prisma.js";
+import { getArgentinaDate, resolveSlots } from "../services/accessRules.service.js";
 import { ROLES } from "../services/auth.service.js";
 import { deleteImage, getImageUrl, uploadImageBuffer } from "../services/cloudinary.service.js";
 import { sendWelcomeEmail } from "../services/email.service.js";
@@ -301,6 +302,27 @@ const formatHorarioHora = (value: Date): string => (
     value.toISOString().slice(11, 16)
 );
 
+/* Traduce los horarios pedidos al horario VIGENTE de cada slot y deduplica: dos hermanos
+   del mismo slot (uno desactivado y otro activo) son la misma sesión y deben quedar en un
+   solo TurnoFijo, sobre el registro que está en uso. */
+const normalizeHorariosToVigente = async (horarioIds: number[]): Promise<number[]> => {
+    const uniqueHorarioIds = Array.from(new Set(horarioIds));
+    if (uniqueHorarioIds.length === 0) return [];
+
+    const slots = await resolveSlots(uniqueHorarioIds);
+    return Array.from(new Set(
+        uniqueHorarioIds.map(id => slots.get(id)?.vigente.ID_HorarioClase ?? id)
+    ));
+};
+
+/* La capacidad de una sesión se mide sobre el slot completo: los turnos fijos repartidos
+   entre hermanos ocupan lugares de la MISMA clase, y el cupo es el del horario vigente.
+   Contar por ID_HorarioClase suelto permitía cargar fijos de más (así se llegó a slots con
+   30 fijos para 26 lugares).
+
+   Sólo cuentan las plantillas que realmente se van a materializar: la de un alumno dado de
+   baja o con usaTurnosFijos apagado nunca genera un turno (lo exige generateFixedTurnosForCuota),
+   así que no puede retener un asiento. */
 const assertFixedSchedulesHaveCapacity = async (
     horarioIds: number[],
     excludeUsuarioId?: number
@@ -308,8 +330,36 @@ const assertFixedSchedulesHaveCapacity = async (
     const uniqueHorarioIds = Array.from(new Set(horarioIds));
     if (uniqueHorarioIds.length === 0) return null;
 
+    const slots = await resolveSlots(uniqueHorarioIds);
+
+    // Un pedido por slot: si vinieran dos hermanos, siguen siendo una sola sesión.
+    const slotsPedidos = new Map<string, { vigenteId: number; horarioIds: number[] }>();
+    for (const id of uniqueHorarioIds) {
+        const slot = slots.get(id);
+        if (!slot) continue;
+        slotsPedidos.set(slot.slotKey, {
+            vigenteId: slot.vigente.ID_HorarioClase,
+            horarioIds: slot.horarioIds,
+        });
+    }
+    if (slotsPedidos.size === 0) return null;
+
+    const todosLosHermanos = Array.from(new Set(
+        Array.from(slotsPedidos.values()).flatMap(slot => slot.horarioIds)
+    ));
+
+    const fijosActivos = await prisma.turnoFijo.findMany({
+        where: {
+            ID_HorarioClase: { in: todosLosHermanos },
+            activo: true,
+            User: { is: { estado: true, usaTurnosFijos: true } },
+            ...(excludeUsuarioId ? { ID_Usuario: { not: excludeUsuarioId } } : {}),
+        },
+        select: { ID_HorarioClase: true, ID_Usuario: true },
+    });
+
     const horarios = await prisma.horarioClase.findMany({
-        where: { ID_HorarioClase: { in: uniqueHorarioIds } },
+        where: { ID_HorarioClase: { in: Array.from(slotsPedidos.values()).map(s => s.vigenteId) } },
         select: {
             ID_HorarioClase: true,
             diaSemana: true,
@@ -318,21 +368,20 @@ const assertFixedSchedulesHaveCapacity = async (
             Clase: { select: { nombre: true } },
         },
     });
+    const horarioVigenteById = new Map(horarios.map(h => [h.ID_HorarioClase, h]));
 
-    const fixedCounts = await prisma.turnoFijo.groupBy({
-        by: ['ID_HorarioClase'],
-        where: {
-            ID_HorarioClase: { in: uniqueHorarioIds },
-            activo: true,
-            ...(excludeUsuarioId ? { ID_Usuario: { not: excludeUsuarioId } } : {}),
-        },
-        _count: { ID_HorarioClase: true },
-    });
-    const countByHorario = new Map(fixedCounts.map(item => [item.ID_HorarioClase, item._count.ID_HorarioClase]));
+    for (const slot of slotsPedidos.values()) {
+        const hermanos = new Set(slot.horarioIds);
+        // Un alumno con fijos en dos hermanos ocupa UN lugar, no dos.
+        const alumnosConFijo = new Set(
+            fijosActivos
+                .filter(fijo => hermanos.has(fijo.ID_HorarioClase))
+                .map(fijo => fijo.ID_Usuario)
+        );
+        const horario = horarioVigenteById.get(slot.vigenteId);
+        if (!horario) continue;
 
-    for (const horario of horarios) {
-        const ocupadosPorFijos = countByHorario.get(horario.ID_HorarioClase) || 0;
-        if (ocupadosPorFijos + 1 > Number(horario.cupos || 0)) {
+        if (alumnosConFijo.size + 1 > Number(horario.cupos || 0)) {
             const clase = horario.Clase?.nombre || 'la clase';
             return `No hay cupo fijo disponible para ${clase} (${horario.diaSemana} ${formatHorarioHora(horario.horaIni)}).`;
         }
@@ -370,7 +419,8 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         }
         // 1) Crear usuario sin imagen
         const hashedPassword = await hashPassword(password);
-        const turnosFijosIds = parseTurnosFijosIds(req.body.turnosFijos);
+        // El front puede mandar un horario desactivado (slot fragmentado): se guarda el vigente.
+        const turnosFijosIds = await normalizeHorariosToVigente(parseTurnosFijosIds(req.body.turnosFijos));
         if (parseBoolean(usaTurnosFijos) && turnosFijosIds.length > 0) {
             const dupError = await assertNoDuplicateFixedDays(turnosFijosIds);
             if (dupError) {
@@ -874,8 +924,10 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
         }
 
         // 3) Actualizar usuario en la BD
+        // El front reenvía los turnos fijos actuales del alumno, que pueden apuntar a un
+        // horario desactivado. Se normalizan al vigente para no re-estampar el horario viejo.
         const turnosFijosIds = req.body.turnosFijos !== undefined
-            ? parseTurnosFijosIds(req.body.turnosFijos)
+            ? await normalizeHorariosToVigente(parseTurnosFijosIds(req.body.turnosFijos))
             : null;
 
         if (turnosFijosIds !== null && parseBoolean(usaTurnosFijos ?? data.usaTurnosFijos) && turnosFijosIds.length > 0) {
@@ -893,11 +945,23 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
 
         const updated = await prisma.$transaction(async (tx) => {
             if (turnosFijosIds !== null) {
-                await tx.turnoFijo.deleteMany({ where: { ID_Usuario: id } });
-                if (parseBoolean(usaTurnosFijos ?? data.usaTurnosFijos) && turnosFijosIds.length > 0) {
-                    await tx.turnoFijo.createMany({
-                        data: turnosFijosIds.map(ID_HorarioClase => ({ ID_Usuario: id, ID_HorarioClase })),
-                        skipDuplicates: true
+                const debeTener = parseBoolean(usaTurnosFijos ?? data.usaTurnosFijos) ? turnosFijosIds : [];
+
+                // Sólo se borran las plantillas ACTIVAS que dejaron de pedirse. Las desactivadas
+                // (por una baja del alumno) se conservan y NO se recrean solas: si se borraran y
+                // volvieran a crearse, guardar la ficha de un alumno de baja le resucitaría los
+                // turnos fijos y volvería a retener cupo.
+                await tx.turnoFijo.deleteMany({
+                    where: { ID_Usuario: id, activo: true, ID_HorarioClase: { notIn: debeTener } },
+                });
+
+                // upsert (no createMany) por el unique [ID_Usuario, ID_HorarioClase]: si ya existe
+                // una plantilla desactivada para ese horario, el admin la está reactivando.
+                for (const ID_HorarioClase of debeTener) {
+                    await tx.turnoFijo.upsert({
+                        where: { ID_Usuario_ID_HorarioClase: { ID_Usuario: id, ID_HorarioClase } },
+                        create: { ID_Usuario: id, ID_HorarioClase },
+                        update: { activo: true },
                     });
                 }
             }
@@ -1046,28 +1110,63 @@ const estadoUser = async (req: Request, res: Response): Promise<void> => {
             };
         }
 
-        // 4) Actualiza el usuario (+ registra el movimiento si hubo cambio de estado)
-        const user = await prisma.user.update({
-            where: { ID_Usuario },
-            data: {
-                ...data,
-                ...(evento ? { movimientos: { create: evento } } : {})
-            },
-            select: {
-                ID_Usuario: true,
-                email: true,
-                estado: true,
-                nombre: true,
-                apellido: true
+        // 4) Actualiza el usuario (+ registra el movimiento si hubo cambio de estado) y,
+        //    en la baja, libera todo lo que el alumno tenía reservado hacia adelante.
+        const esBaja = estado === false && actual.estado !== false;
+        const { user, turnosCancelados, turnosFijosDesactivados } = await prisma.$transaction(async (tx) => {
+            const updated = await tx.user.update({
+                where: { ID_Usuario },
+                data: {
+                    ...data,
+                    ...(evento ? { movimientos: { create: evento } } : {})
+                },
+                select: {
+                    ID_Usuario: true,
+                    email: true,
+                    estado: true,
+                    nombre: true,
+                    apellido: true
+                }
+            });
+
+            if (!esBaja) {
+                // Reactivación: los turnos fijos NO se restauran solos. El horario pudo llenarse
+                // mientras el alumno estuvo de baja; el admin los vuelve a cargar a mano.
+                return { user: updated, turnosCancelados: 0, turnosFijosDesactivados: 0 };
             }
+
+            // Los turnos futuros liberan su cupo. Los pasados (ASISTIDO/AUSENTE) no se tocan:
+            // son historia real y alimentan asistencias, reportes y churn.
+            const nowArg = getArgentinaDate();
+            const turnos = await tx.turno.updateMany({
+                where: {
+                    ID_Usuario,
+                    estado: 'ACTIVO',
+                    fecha: { gte: nowArg },
+                },
+                data: { estado: 'CANCELADO', canceladoEn: nowArg },
+            });
+
+            // Las plantillas fijas se desactivan (no se borran): dejan de retener cupo pero
+            // queda el registro de lo que el alumno tenía.
+            const fijos = await tx.turnoFijo.updateMany({
+                where: { ID_Usuario, activo: true },
+                data: { activo: false },
+            });
+
+            return {
+                user: updated,
+                turnosCancelados: turnos.count,
+                turnosFijosDesactivados: fijos.count,
+            };
         });
 
-        // 4) Devuelve el usuario actualizado
+        // 5) Devuelve el usuario actualizado
         const mensaje = estado
-            ? "Usuario activado correctamente"
-            : "Usuario desactivado correctamente";
+            ? "Usuario activado correctamente. Si usa turnos fijos, hay que volver a cargarlos."
+            : `Usuario desactivado correctamente. Se cancelaron ${turnosCancelados} turno(s) futuro(s) y se liberaron ${turnosFijosDesactivados} turno(s) fijo(s).`;
 
-        res.json({ message: mensaje, user });
+        res.json({ message: mensaje, user, turnosCancelados, turnosFijosDesactivados });
 
     } catch (error: any) {
         if (error.code === "P2025") {

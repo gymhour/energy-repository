@@ -7,6 +7,8 @@ import {
   findActiveCuota,
   getArgentinaDate,
   hasTurnoSameDay,
+  resolveSlot,
+  validateCuotaPaymentForBooking,
   validateHorarioCupoAvailability,
   validatePeriodAvailability
 } from "../services/accessRules.service.js";
@@ -163,6 +165,13 @@ const createTurno = async (req: Request, res: Response): Promise<void> => {
 
     const fechaTurno = parseWallClockDate(fecha);
     const nuevoTurno = await runSerializableTransaction(async (tx) => {
+      // El turno se escribe siempre sobre el horario vigente del slot: si el front mandó
+      // un horario desactivado (slot fragmentado), se redirige al que está en uso.
+      const slot = await resolveSlot(Number(ID_HorarioClase), tx);
+      const ID_HorarioClaseDestino = slot.vigente.ID_HorarioClase;
+
+      // La cuota tiene que cubrir la fecha del turno. El fallback por mes sólo aplica a
+      // cuotas viejas sin período definido: si tienen fechaInicio/fechaFin, se respeta el rango.
       const cuotaActiva = await tx.cuota.findFirst({
         where: {
           ID_Usuario,
@@ -175,6 +184,10 @@ const createTurno = async (req: Request, res: Response): Promise<void> => {
         where: {
           ID_Usuario,
           mes: `${fechaTurno.getFullYear()}-${String(fechaTurno.getMonth() + 1).padStart(2, "0")}`,
+          OR: [
+            { fechaInicio: null },
+            { fechaFin: null },
+          ],
         },
         include: { Plan: true },
         orderBy: { vence: "desc" },
@@ -184,6 +197,9 @@ const createTurno = async (req: Request, res: Response): Promise<void> => {
       }
 
       if (!isAdmin) {
+        const pagoError = await validateCuotaPaymentForBooking(ID_Usuario, cuotaActiva, tx);
+        if (pagoError) throw new Error(pagoError);
+
         const periodError = await validatePeriodAvailability(ID_Usuario, cuotaActiva, undefined, tx);
         if (periodError) throw new Error(periodError);
 
@@ -192,18 +208,19 @@ const createTurno = async (req: Request, res: Response): Promise<void> => {
         }
 
         const horarioActual = await tx.horarioClase.findUnique({
-          where: { ID_HorarioClase: Number(ID_HorarioClase) },
+          where: { ID_HorarioClase: ID_HorarioClaseDestino },
           select: { cupos: true },
         });
         if (!horarioActual) throw new Error("Horario no encontrado");
 
         const cupoError = await validateHorarioCupoAvailability(
-          Number(ID_HorarioClase),
+          ID_HorarioClaseDestino,
           fechaTurno,
           horarioActual.cupos,
           {
             releaseFixedReservationForUserId: Number(ID_Usuario),
             client: tx,
+            horarioIds: slot.horarioIds,
           },
         );
         if (cupoError) throw new Error(cupoError);
@@ -215,7 +232,7 @@ const createTurno = async (req: Request, res: Response): Promise<void> => {
           estado: "ACTIVO",
           origen: req.body.origen || "MANUAL",
           ID_Usuario,
-          ID_HorarioClase,
+          ID_HorarioClase: ID_HorarioClaseDestino,
           ID_Cuota: cuotaActiva.ID_Cuota,
           fechaCreacion: fechaUTC,
         },
@@ -242,6 +259,7 @@ const createTurno = async (req: Request, res: Response): Promise<void> => {
       "El plan permite",
       "Ya tenés un turno",
       "No hay cupos",
+      "No podés agendar turnos",
     ].some(message => String(error.message || "").startsWith(message)) ? 400 : 500;
     res.status(status).json({ message: status === 400 ? error.message : "Error al crear el turno", error: error.message });
   }
@@ -366,7 +384,16 @@ const updateTurno = async (req: Request, res: Response): Promise<void> => {
     const nextUsuario = Number(ID_Usuario || turnoExistente.ID_Usuario);
     const nextHorarioClase = Number(ID_HorarioClase || turnoExistente.ID_HorarioClase);
     const nextEstado = estado || turnoExistente.estado;
+    // Sólo se reubica el turno cuando el pedido cambia de horario (reprogramación).
+    // Un cambio de estado (ASISTIDO/AUSENTE) no debe mover un turno histórico de registro.
+    const reasignaHorario = ID_HorarioClase !== undefined && ID_HorarioClase !== null;
     const turnoActualizado = await runSerializableTransaction(async (tx) => {
+      // Reprogramar sobre un horario desactivado (slot fragmentado) redirige al vigente.
+      const slot = await resolveSlot(nextHorarioClase, tx);
+      const ID_HorarioClaseDestino = reasignaHorario
+        ? slot.vigente.ID_HorarioClase
+        : turnoExistente.ID_HorarioClase;
+
       const cuotaActiva = await tx.cuota.findFirst({
         where: {
           ID_Usuario: nextUsuario,
@@ -395,19 +422,22 @@ const updateTurno = async (req: Request, res: Response): Promise<void> => {
       }
 
       if (ACTIVE_TURNO_STATES.includes(nextEstado)) {
+        // La capacidad de la sesión es siempre la del horario vigente del slot, aunque el
+        // turno quede registrado sobre un hermano desactivado.
         const horarioClase = await tx.horarioClase.findUnique({
-          where: { ID_HorarioClase: nextHorarioClase },
+          where: { ID_HorarioClase: slot.vigente.ID_HorarioClase },
         });
 
         const cupoError = horarioClase
           ? await validateHorarioCupoAvailability(
-            nextHorarioClase,
+            slot.vigente.ID_HorarioClase,
             nextFecha,
             horarioClase.cupos,
             {
               excludeTurnoId: id_turno,
               releaseFixedReservationForUserId: nextUsuario,
               client: tx,
+              horarioIds: slot.horarioIds,
             },
           )
           : null;
@@ -419,7 +449,7 @@ const updateTurno = async (req: Request, res: Response): Promise<void> => {
         data: {
           fecha: nextFecha,
           estado,
-          ID_HorarioClase: ID_HorarioClase || turnoExistente.ID_HorarioClase,
+          ID_HorarioClase: ID_HorarioClaseDestino,
           ID_Usuario: ID_Usuario || turnoExistente.ID_Usuario,
           ID_Cuota: cuotaActiva.ID_Cuota,
         },

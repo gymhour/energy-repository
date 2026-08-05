@@ -118,12 +118,21 @@ const getDateOnly = (date) => (
   new Date(date.getFullYear(), date.getMonth(), date.getDate())
 );
 
+// Las fechas del período de la cuota se guardan como hora de pared en UTC
+// (fechaInicio = 2026-08-01T00:00:00.000Z). Leerlas en hora local las correría un día
+// hacia atrás en Argentina, y se ofrecerían días que la cuota no cubre. Se toma el día
+// UTC tal cual fue escrito.
+const parseCuotaDay = (value) => {
+  const date = parseApiDate(value);
+  return date ? new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) : null;
+};
+
 const getCuotaEndDate = (cuota) => (
-  parseApiDate(cuota?.fechaFin) || parseApiDate(cuota?.vence)
+  parseCuotaDay(cuota?.fechaFin) || parseCuotaDay(cuota?.vence)
 );
 
 const getCuotaStartDate = (cuota) => (
-  parseApiDate(cuota?.fechaInicio)
+  parseCuotaDay(cuota?.fechaInicio)
 );
 
 const findCurrentCuota = (cuotas) => {
@@ -140,6 +149,37 @@ const findCurrentCuota = (cuotas) => {
   }) || null;
 };
 
+// Cuota que todavía no arrancó pero ya está cargada (ej.: el 30/07 con la cuota de agosto).
+// El alumno tiene que poder reservar sus turnos de ese período aunque hoy no esté cubierto.
+const findUpcomingCuota = (cuotas) => (
+  (cuotas || [])
+    .filter((cuota) => {
+      const startDate = getCuotaStartDate(cuota);
+      const endDate = getCuotaEndDate(cuota);
+      if (!startDate || !endDate) return false;
+      return getDateOnly(startDate) > getDateOnly(new Date());
+    })
+    .sort((a, b) => getCuotaStartDate(a) - getCuotaStartDate(b))[0] || null
+);
+
+// La cuota sobre la que se puede reservar: la que cubre hoy y, si no hay, la próxima
+// que ya esté cargada. Es el mismo criterio que usa el backend, que busca la cuota por
+// la fecha DEL TURNO y no por la fecha de hoy.
+const findBookableCuota = (cuotas) => findCurrentCuota(cuotas) || findUpcomingCuota(cuotas);
+
+// Cuota impaga cuyo vencimiento ya pasó (o marcada como vencida por el job nocturno).
+// Mientras exista una, el alumno no puede reservar aunque tenga cuota del período.
+const findOverdueUnpaidCuota = (cuotas) => {
+  const todayOnly = getDateOnly(new Date());
+
+  return (cuotas || []).find((cuota) => {
+    if (cuota?.pagada) return false;
+    if (cuota?.vencida) return true;
+    const venceDate = parseApiDate(cuota?.vence);
+    return !!venceDate && getDateOnly(venceDate) < todayOnly;
+  }) || null;
+};
+
 const getInclusiveDaysBetween = (fromDate, toDate) => {
   if (!fromDate || !toDate) return 0;
   const fromOnly = getDateOnly(fromDate);
@@ -147,12 +187,17 @@ const getInclusiveDaysBetween = (fromDate, toDate) => {
   return Math.max(0, Math.floor((toOnly.getTime() - fromOnly.getTime()) / DAY_MS) + 1);
 };
 
-const isDateWithinReservationWindow = (date, reservationEndDate) => {
+// La ventana de reserva arranca hoy o cuando arranca la cuota (lo que sea más tarde) y
+// termina con la cuota. Sin el piso por fechaInicio se podrían ofrecer días previos al
+// período, que el backend rechazaría por no haber cuota que los cubra.
+const isDateWithinReservationWindow = (date, reservationEndDate, reservationStartDate = null) => {
   if (!date || !reservationEndDate) return false;
   const todayOnly = getDateOnly(new Date());
+  const startOnly = reservationStartDate ? getDateOnly(reservationStartDate) : todayOnly;
+  const minDateOnly = startOnly > todayOnly ? startOnly : todayOnly;
   const dateOnly = getDateOnly(date);
   const maxDateOnly = getDateOnly(reservationEndDate);
-  return dateOnly >= todayOnly && dateOnly <= maxDateOnly;
+  return dateOnly >= minDateOnly && dateOnly <= maxDateOnly;
 };
 
 const normalizeCuotasResponse = (res) => (
@@ -217,8 +262,22 @@ const AgendarTurno = () => {
     fetchInitialData();
   }, []);
 
-  const cuotaVigente = useMemo(() => findCurrentCuota(cuotas), [cuotas]);
-  const reservationEndDate = useMemo(() => getCuotaEndDate(cuotaVigente), [cuotaVigente]);
+  const cuotaVigente = useMemo(() => findBookableCuota(cuotas), [cuotas]);
+  // Una deuda vencida bloquea la reserva, sea del período actual o de un mes anterior.
+  // Es el mismo criterio que aplica el backend y el control de ingreso al gimnasio.
+  const cuotaVencidaImpaga = useMemo(() => findOverdueUnpaidCuota(cuotas), [cuotas]);
+  const puedeReservar = !!cuotaVigente && !cuotaVencidaImpaga;
+  const reservationEndDate = useMemo(
+    () => (puedeReservar ? getCuotaEndDate(cuotaVigente) : null),
+    [cuotaVigente, puedeReservar]
+  );
+  const reservationStartDate = useMemo(
+    () => (puedeReservar ? getCuotaStartDate(cuotaVigente) : null),
+    [cuotaVigente, puedeReservar]
+  );
+  // La cuota está cargada pero su período todavía no arrancó: se reserva hacia adelante.
+  const cuotaAunNoEmpezada = !!reservationStartDate
+    && getDateOnly(reservationStartDate) > getDateOnly(new Date());
 
   useEffect(() => {
     if (preselectionApplied || clases.length === 0 || !location.state) return;
@@ -243,7 +302,7 @@ const AgendarTurno = () => {
 
     if (horarioPreseleccionado) {
       const preselectedDate = getNextDateForHorario(horarioPreseleccionado);
-      if (isDateWithinReservationWindow(preselectedDate, reservationEndDate)) {
+      if (isDateWithinReservationWindow(preselectedDate, reservationEndDate, reservationStartDate)) {
         setSelectedDateTime(preselectedDate);
         setSelectedDayDate(preselectedDate);
       }
@@ -264,7 +323,7 @@ const AgendarTurno = () => {
 
     const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    if (!isDateWithinReservationWindow(dateOnly, reservationEndDate)) {
+    if (!isDateWithinReservationWindow(dateOnly, reservationEndDate, reservationStartDate)) {
       return false;
     }
 
@@ -396,9 +455,16 @@ const AgendarTurno = () => {
   const getAvailableDays = () => {
     if (!selectedClase || !reservationEndDate) return [];
 
-    const daysToShow = getInclusiveDaysBetween(new Date(), reservationEndDate);
+    // El recorrido arranca en el inicio de la cuota cuando todavía no empezó (ej.: el 30/07
+    // con la cuota de agosto). Si arrancara siempre en hoy, se perderían los últimos días
+    // del período por quedar fuera del rango recorrido.
+    const todayOnly = getDateOnly(new Date());
+    const startOnly = reservationStartDate ? getDateOnly(reservationStartDate) : todayOnly;
+    const windowStart = startOnly > todayOnly ? startOnly : todayOnly;
+
+    const daysToShow = getInclusiveDaysBetween(windowStart, reservationEndDate);
     return Array.from({ length: daysToShow }, (_, index) => {
-      const date = new Date();
+      const date = new Date(windowStart);
       date.setDate(date.getDate() + index);
       date.setHours(0, 0, 0, 0);
       const slots = filterDate(date) ? getAllowedHorarioSlots(date) : [];
@@ -543,7 +609,15 @@ const AgendarTurno = () => {
               <CalendarDays size={22} aria-hidden="true" />
             </div>
 
-            {!cuotaVigente ? (
+            {cuotaVencidaImpaga ? (
+              <div className="agendar-empty-state">
+                <Clock3 size={22} aria-hidden="true" />
+                <p>
+                  Tenés una cuota vencida impaga ({cuotaVencidaImpaga.mes}). Regularizá el pago
+                  para volver a reservar turnos.
+                </p>
+              </div>
+            ) : !cuotaVigente ? (
               <div className="agendar-empty-state">
                 <Clock3 size={22} aria-hidden="true" />
                 <p>No encontramos una cuota vigente para reservar turnos.</p>
@@ -551,7 +625,16 @@ const AgendarTurno = () => {
             ) : !selectedClase ? (
               <div className="agendar-empty-state">
                 <Clock3 size={22} aria-hidden="true" />
-                <p>Primero seleccioná una clase para ver turnos disponibles hasta el {formatFullDateLabel(reservationEndDate)}.</p>
+                <p>
+                  {cuotaAunNoEmpezada
+                    ? `Primero seleccioná una clase para ver turnos disponibles desde el ${formatFullDateLabel(reservationStartDate)} hasta el ${formatFullDateLabel(reservationEndDate)}.`
+                    : `Primero seleccioná una clase para ver turnos disponibles hasta el ${formatFullDateLabel(reservationEndDate)}.`}
+                </p>
+                {!cuotaVigente.pagada && (
+                  <p className="agendar-empty-state-note">
+                    Tu cuota está pendiente de pago: podés reservar mientras te queden sesiones de gracia.
+                  </p>
+                )}
               </div>
             ) : availableDays.length === 0 ? (
               <div className="agendar-empty-state">

@@ -55,7 +55,12 @@ const InicioRecepcion = () => {
         setIngresosHoy(asistencias.pagination?.total || 0);
         setUltimosIngresos(asistencias.items || []);
         setRechazadosHoy(rechazadas.pagination?.total || 0);
-        setTurnosHoy(Array.isArray(turnos) ? turnos.length : 0);
+        // Los turnos cancelados ya liberaron su lugar: no son turnos de hoy.
+        setTurnosHoy(
+          Array.isArray(turnos)
+            ? turnos.filter((turno) => turno.estado !== 'CANCELADO').length
+            : 0
+        );
       } catch (error) {
         console.error('Error al cargar el panel de recepción:', error);
         toast.error('Error al cargar los datos. Intente nuevamente.');

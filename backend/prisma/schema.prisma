@@ -74,6 +74,10 @@ model Cuota {
   formaPago                  String?
   fechaPago                  DateTime? // Fecha en que se realizó el pago, opcional
   vencida                    Boolean      @default(false)
+  // Cómo se creó la cuota: "MANUAL" (alta individual, proporcional al mes) o
+  // "MASIVA" (generación del mes, período completo del plan). Null en las anteriores
+  // a este campo, donde el origen no quedó registrado.
+  origen                     String?
   planNombreSnapshot         String?
   planDuracionSnapshot       String?
   planSesionesSemanaSnapshot Int? // DEPRECADO: reemplazado por planSesionesTotalesSnapshot

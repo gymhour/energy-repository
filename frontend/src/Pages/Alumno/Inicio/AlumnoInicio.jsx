@@ -111,7 +111,8 @@ const AlumnoInicio = () => {
   };
 
   const latestTurnos = useMemo(() => {
-    return [...turnos]
+    return turnos
+      .filter((turno) => turno.estado !== 'CANCELADO')
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
       .slice(0, 3);
   }, [turnos]);

@@ -7,14 +7,16 @@ import {
   buildCuotaPlanSnapshot,
   buildCuotaPeriod,
   calculatePeriodEnd,
-  findActiveCuota,
+  findActiveOrUpcomingCuota,
   findBlockingCuotaForPeriod,
   generateFixedTurnosForCuota,
   getArgentinaDate,
+  getDayIndex,
   getHorarioCupoUsage,
   getTotalSessionLimit,
   inferPeriodStart,
   normalizePlanDuration,
+  resolveSlots,
 } from '../services/accessRules.service.js';
 import { runSerializableTransaction } from '../services/transaction.service.js';
 
@@ -50,25 +52,12 @@ type TurnoCandidato = {
 
 const CREATE_MANY_CHUNK_SIZE = 500;
 
-const normalizeDayKey = (value: unknown): string => (
-  String(value ?? "")
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\u00c3\u00a9/g, "e")
-    .replace(/\u00c3\u00a1/g, "a")
-);
-
-const DAY_INDEX: Record<string, number> = {
-  domingo: 0,
-  lunes: 1,
-  martes: 2,
-  miercoles: 3,
-  jueves: 4,
-  viernes: 5,
-  sabado: 6,
-};
+// Cómo se dio de alta la cuota. MANUAL = alta individual (proporcional al mes).
+// MASIVA = generación del mes para todos los alumnos (período completo del plan).
+const CUOTA_ORIGEN = {
+  MANUAL: 'MANUAL',
+  MASIVA: 'MASIVA',
+} as const;
 
 const getWallClockTimeParts = (date: Date): { hours: number; minutes: number } => {
   const iso = date.toISOString();
@@ -82,12 +71,15 @@ const buildUsuarioNombre = (user: { ID_Usuario: number; nombre: string | null; a
   `${user.nombre || ""} ${user.apellido || ""}`.trim() || `ID ${user.ID_Usuario}`
 );
 
-const buildTurnoKey = (ID_Usuario: number, ID_HorarioClase: number, fecha: Date): string => (
-  `${ID_Usuario}:${ID_HorarioClase}:${fecha.getTime()}`
+// Las claves se arman sobre el SLOT (clase + día + hora), no sobre el ID_HorarioClase:
+// una misma sesión puede estar repartida en varios horarios hermanos y hay que tratarla
+// como una sola a la hora de deduplicar turnos y de contar cupos.
+const buildTurnoKey = (ID_Usuario: number, slotKey: string, fecha: Date): string => (
+  `${ID_Usuario}:${slotKey}:${fecha.getTime()}`
 );
 
-const buildHorarioFechaKey = (ID_HorarioClase: number, fecha: Date): string => (
-  `${ID_HorarioClase}:${fecha.getTime()}`
+const buildSlotFechaKey = (slotKey: string, fecha: Date): string => (
+  `${slotKey}:${fecha.getTime()}`
 );
 
 const chunkArray = <T>(items: T[], size: number): T[][] => {
@@ -145,6 +137,26 @@ const parseMesParam = (mes: unknown): { year: number; monthIndex: number } | nul
   return { year, monthIndex: month - 1 };
 };
 
+// El vencimiento tiene que caer DENTRO del mes de la cuota: la cuota de agosto no puede
+// vencer en septiembre ni en julio. Se compara en UTC porque el front manda la fecha
+// elegida como hora de pared en UTC (Date.UTC(año, mes, día, 23:59:59)).
+const validateVenceWithinMes = (venceDate: Date, mes: string): string | null => {
+  const parsed = parseMesParam(mes);
+  if (!parsed) return "Mes inválido. Usá el formato YYYY-MM";
+
+  const mismoMes = venceDate.getUTCFullYear() === parsed.year
+    && venceDate.getUTCMonth() === parsed.monthIndex;
+  if (mismoMes) return null;
+
+  const mesPedido = `${String(parsed.monthIndex + 1).padStart(2, "0")}/${parsed.year}`;
+  return `La fecha de vencimiento debe estar dentro del mes de la cuota (${mesPedido}). Ingresaste ${formatDateArg(venceDate)}.`;
+};
+
+// Validación completa del vencimiento: dentro del mes de la cuota y posterior a su inicio.
+const validateVence = (venceDate: Date, mes: string, fechaInicio: Date): string | null => (
+  validateVenceWithinMes(venceDate, mes) ?? validateVenceAfterStart(venceDate, fechaInicio)
+);
+
 const startOfLocalDay = (date: Date): Date => (
   new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0)
 );
@@ -181,6 +193,8 @@ const buildCuotaPaymentData = (
   };
 };
 
+// Equivalente mensual del precio del plan: la cuota manual cobra SIEMPRE un mes, aunque
+// el plan sea trimestral, semestral o anual.
 const getManualMonthlyEquivalentPrice = (plan: { precio: number; duracion?: string | null } | null | undefined): number | null => {
   const precioPlan = Number(plan?.precio);
   if (!Number.isFinite(precioPlan)) return null;
@@ -228,6 +242,9 @@ const calculateManualCuotaPreview = (mes: string, plan: { precio: number; duraci
   };
 };
 
+// La cuota manual cubre SIEMPRE hasta el fin del mes calendario, sin importar la duración
+// del plan del alumno: es una cuota proporcional del mes, no el período del plan. La
+// generación masiva es la que sí respeta la duración del plan.
 const buildManualCuotaMonthPeriod = (
   mes: string,
   explicitStart?: Date | null,
@@ -377,7 +394,7 @@ const construirCandidatosTurnosFijosUsuario = (
       const horario = fixed.HorarioClase;
       if (!horario) continue;
 
-      const expectedDay = DAY_INDEX[normalizeDayKey(horario.diaSemana)];
+      const expectedDay = getDayIndex(horario.diaSemana);
       if (expectedDay === undefined || cursor.getDay() !== expectedDay) continue;
 
       const horaIni = getWallClockTimeParts(new Date(horario.horaIni));
@@ -418,15 +435,27 @@ const validarCupoTurnosCandidatos = async (
   conflictosCupo: ConflictoCupo[];
   turnosOmitidosPorExistentes: number;
 }> => {
-  const horarioIds = Array.from(new Set(candidatos.map(c => c.ID_HorarioClase)));
-  const minFecha = candidatos.length
-    ? new Date(Math.min(...candidatos.map(c => c.fecha.getTime())))
-    : null;
-  const maxFecha = candidatos.length
-    ? new Date(Math.max(...candidatos.map(c => c.fecha.getTime())))
-    : null;
+  if (candidatos.length === 0) {
+    return { turnosACrear: [], conflictosCupo: [], turnosOmitidosPorExistentes: 0 };
+  }
 
-  const turnosExistentes = horarioIds.length && minFecha && maxFecha
+  // Un candidato puede apuntar a un horario desactivado (slot fragmentado). Resolvemos el
+  // slot de cada uno: los hermanos definen la ocupación y el vigente define la capacidad
+  // y el horario sobre el que se va a escribir el turno.
+  const slots = await resolveSlots(candidatos.map(c => c.ID_HorarioClase), client);
+  const slotDe = (ID_HorarioClase: number) => slots.get(ID_HorarioClase);
+  const slotKeyDe = (ID_HorarioClase: number) => slotDe(ID_HorarioClase)?.slotKey ?? `horario:${ID_HorarioClase}`;
+
+  // Todo hermano de todo slot involucrado: es el universo de turnos a mirar.
+  const slotKeyByHorario = new Map<number, string>();
+  for (const slot of slots.values()) {
+    for (const id of slot.horarioIds) slotKeyByHorario.set(id, slot.slotKey);
+  }
+  const horarioIds = Array.from(slotKeyByHorario.keys());
+  const minFecha = new Date(Math.min(...candidatos.map(c => c.fecha.getTime())));
+  const maxFecha = new Date(Math.max(...candidatos.map(c => c.fecha.getTime())));
+
+  const turnosExistentes = horarioIds.length
     ? await client.turno.findMany({
       where: {
         ID_HorarioClase: { in: horarioIds },
@@ -440,18 +469,6 @@ const validarCupoTurnosCandidatos = async (
       },
     })
     : [];
-  const horariosActuales = horarioIds.length
-    ? await client.horarioClase.findMany({
-      where: { ID_HorarioClase: { in: horarioIds } },
-      select: { ID_HorarioClase: true, cupos: true },
-    })
-    : [];
-  const cuposActualesByHorario = new Map(
-    horariosActuales.map((horario: { ID_HorarioClase: number; cupos: number }) => [
-      horario.ID_HorarioClase,
-      Number(horario.cupos || 0),
-    ])
-  );
 
   const existingTurnoKeys = new Set<string>();
 
@@ -459,17 +476,38 @@ const validarCupoTurnosCandidatos = async (
     const fechaTurno = new Date(turno.fecha);
 
     if (turno.estado !== "CANCELADO") {
-      existingTurnoKeys.add(buildTurnoKey(turno.ID_Usuario, turno.ID_HorarioClase, fechaTurno));
+      const slotKey = slotKeyByHorario.get(turno.ID_HorarioClase) ?? `horario:${turno.ID_HorarioClase}`;
+      existingTurnoKeys.add(buildTurnoKey(turno.ID_Usuario, slotKey, fechaTurno));
     }
   }
 
-  const turnosACrear = candidatos.filter(c => (
-    !existingTurnoKeys.has(buildTurnoKey(c.ID_Usuario, c.ID_HorarioClase, c.fecha))
-  ));
+  // Los turnos se escriben SIEMPRE sobre el horario vigente del slot, nunca sobre el
+  // desactivado al que puede apuntar el TurnoFijo. Además se descarta cualquier repetido
+  // dentro del mismo lote: si un alumno tuviera fijos en dos hermanos del mismo slot, es
+  // una sola sesión y le corresponde un solo turno.
+  const clavesACrear = new Set<string>();
+  const turnosACrear = candidatos
+    .filter(c => !existingTurnoKeys.has(buildTurnoKey(c.ID_Usuario, slotKeyDe(c.ID_HorarioClase), c.fecha)))
+    .filter(c => {
+      const clave = buildTurnoKey(c.ID_Usuario, slotKeyDe(c.ID_HorarioClase), c.fecha);
+      if (clavesACrear.has(clave)) return false;
+      clavesACrear.add(clave);
+      return true;
+    })
+    .map(c => {
+      const slot = slotDe(c.ID_HorarioClase);
+      if (!slot) return c;
+      return {
+        ...c,
+        ID_HorarioClase: slot.vigente.ID_HorarioClase,
+        cupos: slot.vigente.cupos,
+      };
+    });
   const turnosOmitidosPorExistentes = candidatos.length - turnosACrear.length;
 
-  const candidatosPorHorarioFecha = new Map<string, {
+  const candidatosPorSlotFecha = new Map<string, {
     ID_HorarioClase: number;
+    horarioIds: number[];
     fecha: Date;
     cupos: number;
     nombreClase: string | null;
@@ -478,17 +516,19 @@ const validarCupoTurnosCandidatos = async (
   }>();
 
   for (const candidato of turnosACrear) {
-    const key = buildHorarioFechaKey(candidato.ID_HorarioClase, candidato.fecha);
-    const group = candidatosPorHorarioFecha.get(key);
+    const slot = slotDe(candidato.ID_HorarioClase);
+    const slotKey = slot?.slotKey ?? `horario:${candidato.ID_HorarioClase}`;
+    const key = buildSlotFechaKey(slotKey, candidato.fecha);
+    const group = candidatosPorSlotFecha.get(key);
 
     if (group) {
       group.candidatos.push(candidato);
     } else {
-      const cuposActuales = cuposActualesByHorario.get(candidato.ID_HorarioClase) ?? candidato.cupos;
-      candidatosPorHorarioFecha.set(key, {
-        ID_HorarioClase: candidato.ID_HorarioClase,
+      candidatosPorSlotFecha.set(key, {
+        ID_HorarioClase: slot?.vigente.ID_HorarioClase ?? candidato.ID_HorarioClase,
+        horarioIds: slot?.horarioIds ?? [candidato.ID_HorarioClase],
         fecha: candidato.fecha,
-        cupos: cuposActuales,
+        cupos: slot?.vigente.cupos ?? candidato.cupos,
         nombreClase: candidato.nombreClase,
         diaSemana: candidato.diaSemana,
         candidatos: [candidato],
@@ -496,11 +536,12 @@ const validarCupoTurnosCandidatos = async (
     }
   }
 
-  const conflictosCupo = (await Promise.all(Array.from(candidatosPorHorarioFecha.values())
+  const conflictosCupo = (await Promise.all(Array.from(candidatosPorSlotFecha.values())
     .map(async group => {
       const usage = await getHorarioCupoUsage(group.ID_HorarioClase, group.fecha, {
         releaseFixedReservationForUserIds: group.candidatos.map(c => c.ID_Usuario),
         client,
+        horarioIds: group.horarioIds,
       });
       const turnosExistentesActivos = usage.turnosActivos;
       const reservasFijasPendientes = usage.reservasFijasPendientes;
@@ -609,6 +650,7 @@ const construirPlanMasivo = async (
       vence: venceDate,
       fechaInicio: periodStart,
       fechaFin: periodEnd,
+      origen: CUOTA_ORIGEN.MASIVA,
       ...buildCuotaPaymentData(u.plan, Number(u.plan.precio), formaPago, nowArg),
       ...buildCuotaPlanSnapshot(u.plan)
     });
@@ -630,7 +672,7 @@ const construirPlanMasivo = async (
         if (totalLimit > 0 && userCreated >= totalLimit) break;
         const horario = fixed.HorarioClase;
         if (!horario) continue;
-        const expectedDay = DAY_INDEX[normalizeDayKey(horario.diaSemana)];
+        const expectedDay = getDayIndex(horario.diaSemana);
 
         if (expectedDay === undefined || cursor.getDay() !== expectedDay) {
           continue;
@@ -802,7 +844,7 @@ const createCuota = async (req: Request, res: Response): Promise<void> => {
       return;
     }
     const { fechaInicio: periodStart, fechaFin: periodEnd } = manualPeriod;
-    const venceError = validateVenceAfterStart(venceDate, periodStart);
+    const venceError = validateVence(venceDate, mes, periodStart);
     if (venceError) {
       res.status(400).json({ message: venceError });
       return;
@@ -828,6 +870,7 @@ const createCuota = async (req: Request, res: Response): Promise<void> => {
         vence: venceDate,
         fechaInicio: periodStart,
         fechaFin: periodEnd,
+        origen: CUOTA_ORIGEN.MANUAL,
         ...paymentData,
         ...snapshot
       },
@@ -964,7 +1007,7 @@ const prepararCuotaUsuarioLotes = async (req: Request, res: Response): Promise<v
       return;
     }
     const { fechaInicio: periodStart, fechaFin: periodEnd } = manualPeriod;
-    const venceError = validateVenceAfterStart(venceDate, periodStart);
+    const venceError = validateVence(venceDate, mes, periodStart);
     if (venceError) {
       res.status(400).json({ message: venceError });
       return;
@@ -1018,6 +1061,7 @@ const prepararCuotaUsuarioLotes = async (req: Request, res: Response): Promise<v
           vence: venceDate,
           fechaInicio: periodStart,
           fechaFin: periodEnd,
+          origen: CUOTA_ORIGEN.MANUAL,
           ...paymentData,
           ...snapshot,
         },
@@ -1165,7 +1209,7 @@ export const generateMonthlyCuotas = async (req: Request, res: Response): Promis
       return;
     }
     const periodStart = inferPeriodStart(mes);
-    const venceError = validateVenceAfterStart(venceDate, periodStart);
+    const venceError = validateVence(venceDate, mes, periodStart);
     if (venceError) {
       res.status(400).json({ message: venceError });
       return;
@@ -1258,7 +1302,7 @@ export const prepararCuotasMasivas = async (req: Request, res: Response): Promis
       return;
     }
     const periodStart = inferPeriodStart(mes);
-    const venceError = validateVenceAfterStart(venceDate, periodStart);
+    const venceError = validateVence(venceDate, mes, periodStart);
     if (venceError) {
       res.status(400).json({ message: venceError });
       return;
@@ -1339,7 +1383,7 @@ export const generarCuotasLote = async (req: Request, res: Response): Promise<vo
       return;
     }
     const periodStart = inferPeriodStart(mes);
-    const venceError = validateVenceAfterStart(venceDate, periodStart);
+    const venceError = validateVence(venceDate, mes, periodStart);
     if (venceError) {
       res.status(400).json({ message: venceError });
       return;
@@ -1424,9 +1468,11 @@ const regenerateTurnosFijosByUsuario = async (req: Request, res: Response): Prom
     }
 
     const now = getArgentinaDate();
-    const cuota = await findActiveCuota(usuarioId, now);
+    // Si el período todavía no arrancó (ej.: el 30/07 con la cuota de agosto ya creada),
+    // igual hay que poder regenerar sus turnos fijos.
+    const cuota = await findActiveOrUpcomingCuota(usuarioId, now);
     if (!cuota?.ID_Cuota || !cuota.fechaInicio || !cuota.fechaFin) {
-      res.status(400).json({ message: 'El usuario no tiene una cuota vigente para regenerar turnos fijos.' });
+      res.status(400).json({ message: 'El usuario no tiene una cuota vigente ni próxima para regenerar turnos fijos.' });
       return;
     }
 
@@ -1629,6 +1675,7 @@ export const getAllCuotas = async (req: Request, res: Response): Promise<void> =
             }
           },
           Plan: true,
+          origen: true,
           fechaInicio: true,
           fechaFin: true,
           planNombreSnapshot: true,

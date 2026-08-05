@@ -189,6 +189,12 @@
     padding: 18px;
 }
 
+/* Aclaración secundaria dentro del estado vacío (ej: cuota pendiente con gracia). */
+.agendar-empty-state-note {
+    font-size: 0.86rem;
+    opacity: 0.8;
+}
+
 .agendar-days-strip {
     display: grid;
     grid-auto-flow: column;

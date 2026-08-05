@@ -26,12 +26,21 @@ const DAY_INDEX: Record<string, number> = {
   lunes: 1,
   martes: 2,
   miercoles: 3,
-  miércoles: 3,
   jueves: 4,
   viernes: 5,
   sabado: 6,
-  sábado: 6,
 };
+
+// "Miércoles", "miercoles" y "MIÉRCOLES" (precompuesto o descompuesto) son el mismo día.
+export const normalizeDayKey = (value: unknown): string => (
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+);
+
+export const getDayIndex = (value: unknown): number | undefined => DAY_INDEX[normalizeDayKey(value)];
 
 const getWallClockTimeParts = (date: Date): { hours: number; minutes: number } => {
   const iso = date.toISOString();
@@ -173,6 +182,24 @@ export const findActiveCuota = async (ID_Usuario: number, date = getArgentinaDat
   });
 };
 
+// La cuota que cubre la fecha dada y, si no hay, la próxima ya cargada.
+// Sirve para las acciones que operan sobre el período (generar/regenerar turnos fijos):
+// el 30/07, con la cuota de agosto ya creada, hay que poder trabajar sobre ella.
+// El control de ingreso NO usa esto: para entrar al gimnasio hace falta cuota de HOY.
+export const findActiveOrUpcomingCuota = async (ID_Usuario: number, date = getArgentinaDate()) => {
+  const vigente = await findActiveCuota(ID_Usuario, date);
+  if (vigente) return vigente;
+
+  return prisma.cuota.findFirst({
+    where: {
+      ID_Usuario,
+      fechaInicio: { gt: date },
+    },
+    include: { Plan: true },
+    orderBy: { fechaInicio: "asc" },
+  });
+};
+
 export const getWeeklySessionLimit = (cuota: any): number => (
   Number(cuota?.planSesionesSemanaSnapshot ?? cuota?.Plan?.sesionesPorSemana ?? 0)
 );
@@ -218,8 +245,12 @@ export const countWeeklyUsedSessions = async (
   });
 };
 
-export const countUnpaidAllowedAttendances = async (ID_Usuario: number, ID_Cuota: number): Promise<number> => (
-  prisma.asistencia.count({
+export const countUnpaidAllowedAttendances = async (
+  ID_Usuario: number,
+  ID_Cuota: number,
+  client: any = prisma
+): Promise<number> => (
+  client.asistencia.count({
     where: {
       ID_Usuario,
       ID_Cuota,
@@ -227,6 +258,48 @@ export const countUnpaidAllowedAttendances = async (ID_Usuario: number, ID_Cuota
     },
   })
 );
+
+// Reglas de pago para RESERVAR un turno. Mismo criterio que el control de ingreso
+// (registrarAsistencia), para que el alumno no pueda reservar algo a lo que después no
+// lo van a dejar entrar:
+//   - cualquier cuota impaga y vencida bloquea, aunque sea de un mes anterior;
+//   - con la cuota del período pendiente puede reservar mientras le queden sesiones de
+//     gracia, y la gracia se consume con las asistencias permitidas de esa cuota.
+// El tope de sesiones del plan y el rango de fechas se validan aparte.
+export const validateCuotaPaymentForBooking = async (
+  ID_Usuario: number,
+  cuota: any,
+  client: any = prisma
+): Promise<string | null> => {
+  const deudaVencida = await client.cuota.findFirst({
+    where: {
+      ID_Usuario,
+      pagada: false,
+      OR: [
+        { vencida: true },
+        { vence: { lt: getArgentinaDate() } },
+      ],
+    },
+    select: { mes: true },
+  });
+  if (deudaVencida) {
+    return `No podés agendar turnos porque tenés una cuota vencida impaga (${deudaVencida.mes}). Regularizá el pago para volver a reservar.`;
+  }
+
+  if (cuota?.pagada) return null;
+
+  const graceLimit = getGraceSessionLimit(cuota);
+  if (graceLimit <= 0) {
+    return "No podés agendar turnos con la cuota pendiente de pago. Tu plan no incluye sesiones de gracia.";
+  }
+
+  const graceUsed = await countUnpaidAllowedAttendances(ID_Usuario, cuota.ID_Cuota, client);
+  if (graceUsed >= graceLimit) {
+    return `No podés agendar turnos: ya usaste las ${graceLimit} sesión(es) de gracia de tu cuota pendiente. Regularizá el pago para seguir reservando.`;
+  }
+
+  return null;
+};
 
 export const validateWeeklyAvailability = async (
   ID_Usuario: number,
@@ -301,41 +374,6 @@ type HorarioCupoUsageOptions = {
   horarioIds?: number[];
 };
 
-// Un mismo turno-sesión (clase + día de la semana + hora de inicio) puede quedar
-// repartido en varios registros de HorarioClase cuando se edita un horario en modo
-// "preserve": se crea un horario nuevo (activo) y se desactiva el viejo, pero los turnos
-// ya existentes quedan asociados al horario viejo. Para calcular la ocupación real de la
-// sesión hay que mirar TODOS los horarios hermanos de ese slot, no solo el activo.
-export const resolveSlotHorarioIds = async (
-  ID_HorarioClase: number,
-  client: any = prisma
-): Promise<number[]> => {
-  const horario = await client.horarioClase.findUnique({
-    where: { ID_HorarioClase },
-    select: { ID_Clase: true, diaSemana: true, horaIni: true },
-  });
-  if (!horario) return [ID_HorarioClase];
-
-  const targetDay = DAY_INDEX[String(horario.diaSemana).trim().toLowerCase()];
-  const target = getWallClockTimeParts(new Date(horario.horaIni));
-
-  const candidates = await client.horarioClase.findMany({
-    where: { ID_Clase: horario.ID_Clase },
-    select: { ID_HorarioClase: true, diaSemana: true, horaIni: true },
-  });
-
-  const ids = candidates
-    .filter((h: { diaSemana: string; horaIni: Date }) => {
-      const day = DAY_INDEX[String(h.diaSemana).trim().toLowerCase()];
-      if (day !== targetDay) return false;
-      const t = getWallClockTimeParts(new Date(h.horaIni));
-      return t.hours === target.hours && t.minutes === target.minutes;
-    })
-    .map((h: { ID_HorarioClase: number }) => h.ID_HorarioClase);
-
-  return ids.length ? ids : [ID_HorarioClase];
-};
-
 type HorarioSlotCapacity = {
   ID_HorarioClase: number;
   cupos: number;
@@ -352,6 +390,141 @@ export const selectCurrentSlotHorario = (
 
   return activeHorarios[0] ?? fallback;
 };
+
+// Un "slot" es una sesión real del gimnasio: clase + día de la semana + hora de inicio.
+// Un mismo slot puede quedar repartido en varios registros de HorarioClase cuando se
+// edita un horario en modo "preserve": se crea un horario nuevo (activo) y se desactiva
+// el viejo, pero los turnos ya existentes quedan asociados al horario viejo.
+//
+// Regla del sistema: la ocupación se cuenta sobre TODOS los hermanos del slot, pero la
+// capacidad se lee del horario VIGENTE y los turnos nuevos se escriben sobre él. Los
+// horarios desactivados sólo existen para contabilizar los turnos históricos.
+export type ResolvedSlot = {
+  // Todos los HorarioClase del slot (activos e inactivos). Es el universo a contar.
+  horarioIds: number[];
+  // Horario sobre el que se lee la capacidad y se escriben los turnos nuevos.
+  vigente: { ID_HorarioClase: number; cupos: number; activo: boolean };
+  // Clave estable de la sesión: agrupa candidatos aunque apunten a hermanos distintos.
+  slotKey: string;
+};
+
+const buildSlotKey = (ID_Clase: number, diaSemana: unknown, horaIni: Date): string => {
+  const { hours, minutes } = getWallClockTimeParts(horaIni);
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+  return `${ID_Clase}|${normalizeDayKey(diaSemana)}|${hh}:${mm}`;
+};
+
+const buildOrphanSlot = (ID_HorarioClase: number): ResolvedSlot => ({
+  horarioIds: [ID_HorarioClase],
+  vigente: { ID_HorarioClase, cupos: 0, activo: false },
+  slotKey: `horario:${ID_HorarioClase}`,
+});
+
+type SlotHorarioRow = {
+  ID_HorarioClase: number;
+  ID_Clase: number;
+  diaSemana: string;
+  horaIni: Date;
+  cupos: number;
+  activo: boolean;
+};
+
+const SLOT_HORARIO_SELECT = {
+  ID_HorarioClase: true,
+  ID_Clase: true,
+  diaSemana: true,
+  horaIni: true,
+  cupos: true,
+  activo: true,
+};
+
+// Resuelve varios horarios de una sola vez (2 queries en total, sin importar cuántos
+// horarios se pidan). Usarla siempre que haya que resolver más de un horario.
+//
+// El mapa queda indexado por TODOS los hermanos de cada slot resuelto, no sólo por los
+// ids pedidos: así `get(idVigente)` funciona aunque se haya pedido el hermano viejo.
+export const resolveSlots = async (
+  ID_HorarioClases: number[],
+  client: any = prisma
+): Promise<Map<number, ResolvedSlot>> => {
+  const uniqueIds = Array.from(new Set(ID_HorarioClases.filter((id) => Number.isInteger(id))));
+  const resolved = new Map<number, ResolvedSlot>();
+  if (uniqueIds.length === 0) return resolved;
+
+  const solicitados: SlotHorarioRow[] = await client.horarioClase.findMany({
+    where: { ID_HorarioClase: { in: uniqueIds } },
+    select: SLOT_HORARIO_SELECT,
+  });
+
+  for (const id of uniqueIds) {
+    if (!solicitados.some((h) => h.ID_HorarioClase === id)) {
+      resolved.set(id, buildOrphanSlot(id));
+    }
+  }
+  if (solicitados.length === 0) return resolved;
+
+  const claseIds = Array.from(new Set(solicitados.map((h) => h.ID_Clase)));
+  const hermanos: SlotHorarioRow[] = await client.horarioClase.findMany({
+    where: { ID_Clase: { in: claseIds } },
+    select: SLOT_HORARIO_SELECT,
+  });
+
+  const bySlotKey = new Map<string, SlotHorarioRow[]>();
+  for (const horario of hermanos) {
+    const key = buildSlotKey(horario.ID_Clase, horario.diaSemana, new Date(horario.horaIni));
+    const group = bySlotKey.get(key);
+    if (group) group.push(horario);
+    else bySlotKey.set(key, [horario]);
+  }
+
+  for (const horario of solicitados) {
+    const slotKey = buildSlotKey(horario.ID_Clase, horario.diaSemana, new Date(horario.horaIni));
+    const group = bySlotKey.get(slotKey) ?? [horario];
+    const capacidades = group.map((h) => ({
+      ID_HorarioClase: h.ID_HorarioClase,
+      cupos: Number(h.cupos ?? 0),
+      activo: Boolean(h.activo),
+    }));
+    const fallback = {
+      ID_HorarioClase: horario.ID_HorarioClase,
+      cupos: Number(horario.cupos ?? 0),
+      activo: Boolean(horario.activo),
+    };
+    const vigente = selectCurrentSlotHorario(capacidades, fallback);
+
+    const slot: ResolvedSlot = {
+      horarioIds: capacidades.map((h) => h.ID_HorarioClase),
+      vigente: {
+        ID_HorarioClase: vigente.ID_HorarioClase,
+        cupos: Number(vigente.cupos ?? 0),
+        activo: Boolean(vigente.activo),
+      },
+      slotKey,
+    };
+
+    // El slot es el mismo para todos los hermanos: se indexa por cada uno.
+    for (const id of slot.horarioIds) resolved.set(id, slot);
+    resolved.set(horario.ID_HorarioClase, slot);
+  }
+
+  return resolved;
+};
+
+export const resolveSlot = async (
+  ID_HorarioClase: number,
+  client: any = prisma
+): Promise<ResolvedSlot> => {
+  const resolved = await resolveSlots([ID_HorarioClase], client);
+  return resolved.get(ID_HorarioClase) ?? buildOrphanSlot(ID_HorarioClase);
+};
+
+export const resolveSlotHorarioIds = async (
+  ID_HorarioClase: number,
+  client: any = prisma
+): Promise<number[]> => (
+  (await resolveSlot(ID_HorarioClase, client)).horarioIds
+);
 
 export const countPendingFixedReservationsForHorarioFecha = async (
   ID_HorarioClase: number,
@@ -486,6 +659,12 @@ export const generateFixedTurnosForCuota = async (cuota: any): Promise<{
 
   if (!user?.usaTurnosFijos || user.TurnosFijos.length === 0) return { created: 0, errores: [] };
 
+  // El TurnoFijo puede apuntar a un horario desactivado (slot fragmentado por una edición
+  // "preserve"). Los turnos se crean SIEMPRE sobre el horario vigente del slot.
+  const slots = await resolveSlots(
+    user.TurnosFijos.map((fixed) => fixed.ID_HorarioClase),
+  );
+
   // Tope: no se generan más turnos que las sesiones totales del plan.
   const totalLimit = getTotalSessionLimit(cuota);
 
@@ -503,8 +682,11 @@ export const generateFixedTurnosForCuota = async (cuota: any): Promise<{
     for (const fixed of user.TurnosFijos) {
       if (totalLimit > 0 && created >= totalLimit) break;
       const horario = fixed.HorarioClase;
+      const slot = slots.get(horario.ID_HorarioClase);
+      const horarioIds = slot?.horarioIds ?? [horario.ID_HorarioClase];
+      const ID_HorarioClaseDestino = slot?.vigente.ID_HorarioClase ?? horario.ID_HorarioClase;
 
-      const expectedDay = DAY_INDEX[String(horario.diaSemana).trim().toLowerCase()];
+      const expectedDay = getDayIndex(horario.diaSemana);
       if (expectedDay === undefined || cursor.getDay() !== expectedDay) continue;
 
       const horaIni = getWallClockTimeParts(new Date(horario.horaIni));
@@ -521,10 +703,11 @@ export const generateFixedTurnosForCuota = async (cuota: any): Promise<{
       // Turno en fecha/horario ya pasado: no se crea (nadie va a asistir).
       if (fechaTurno <= nowArg) continue;
 
+      // El alumno ya puede tener el turno de esa sesión sobre cualquier hermano del slot.
       const existing = await prisma.turno.findFirst({
         where: {
           ID_Usuario: cuota.ID_Usuario,
-          ID_HorarioClase: horario.ID_HorarioClase,
+          ID_HorarioClase: { in: horarioIds },
           fecha: fechaTurno,
         },
         select: { id_turno: true },
@@ -535,26 +718,28 @@ export const generateFixedTurnosForCuota = async (cuota: any): Promise<{
         const existingInTransaction = await tx.turno.findFirst({
           where: {
             ID_Usuario: cuota.ID_Usuario,
-            ID_HorarioClase: horario.ID_HorarioClase,
+            ID_HorarioClase: { in: horarioIds },
             fecha: fechaTurno,
           },
           select: { id_turno: true },
         });
         if (existingInTransaction) return "existente";
 
+        // La capacidad es la del horario vigente, no la del registro al que apunta el fijo.
         const horarioActual = await tx.horarioClase.findUnique({
-          where: { ID_HorarioClase: horario.ID_HorarioClase },
+          where: { ID_HorarioClase: ID_HorarioClaseDestino },
           select: { cupos: true },
         });
         if (!horarioActual) return "sin_cupo";
 
         const cupoError = await validateHorarioCupoAvailability(
-          horario.ID_HorarioClase,
+          ID_HorarioClaseDestino,
           fechaTurno,
           horarioActual.cupos,
           {
             releaseFixedReservationForUserId: Number(cuota.ID_Usuario),
             client: tx,
+            horarioIds,
           },
         );
         if (cupoError) return "sin_cupo";
@@ -565,7 +750,7 @@ export const generateFixedTurnosForCuota = async (cuota: any): Promise<{
             estado: "ACTIVO",
             origen: "FIJO",
             ID_Usuario: cuota.ID_Usuario,
-            ID_HorarioClase: horario.ID_HorarioClase,
+            ID_HorarioClase: ID_HorarioClaseDestino,
             ID_Cuota: cuota.ID_Cuota,
             fechaCreacion: getArgentinaDate(),
           },
@@ -577,7 +762,7 @@ export const generateFixedTurnosForCuota = async (cuota: any): Promise<{
         created += 1;
       } else if (resultado === "sin_cupo") {
         errores.push({
-          ID_HorarioClase: horario.ID_HorarioClase,
+          ID_HorarioClase: ID_HorarioClaseDestino,
           fecha: fechaTurno,
           motivo: 'sin_cupo',
           nombreClase: horario.Clase?.nombre ?? null,

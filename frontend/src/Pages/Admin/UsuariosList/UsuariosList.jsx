@@ -247,14 +247,15 @@ const UsuariosList = ({ fromAdmin, fromEntrenador }) => {
       const body = { estado: nuevoEstado };
       if (!nuevoEstado && motivo) body.motivoBaja = motivo;
       if (nuevoEstado && motivo) body.motivoReactivacion = motivo;
-      await apiClient.put(`/usuarios/estado/${id}`, body);
+      const { data } = await apiClient.put(`/usuarios/estado/${id}`, body);
       setUsuarios(prev =>
         prev.map(u =>
           u.ID_Usuario === id ? { ...u, estado: nuevoEstado } : u
         )
       );
       fetchUsuariosStats();
-      toast.success(`Usuario ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`);
+      // El backend detalla cuántos turnos y turnos fijos se liberaron con la baja.
+      toast.success(data?.message || `Usuario ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`);
     } catch {
       toast.error('Error al actualizar estado');
     } finally {

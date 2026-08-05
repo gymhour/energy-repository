@@ -90,6 +90,12 @@ const BULK_DELETE_CHUNK_SIZE = 50;
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Cómo se dio de alta la cuota. Las anteriores a este registro llegan con origen null.
+const CUOTA_ORIGEN_LABEL = {
+  MANUAL: 'Manual',
+  MASIVA: 'Masiva',
+};
+
 // Los turnos se guardan como wall-clock en UTC, así que se lee con getUTC* para mostrar la hora real.
 const formatConflictFecha = (iso) => {
   if (!iso) return '';
@@ -202,6 +208,36 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
   const buildCuotaStartDate = (dateObj) => (
     dateObj ? new Date(dateObj.getFullYear(), dateObj.getMonth(), 1) : null
   );
+
+  // Rango válido para el vencimiento: del día corriente hasta el fin del mes de la cuota.
+  // Además arranca el día 2 como mínimo, porque el backend exige que el vencimiento sea
+  // posterior al inicio del período (el día 1 del mes).
+  const buildVenceRange = (dateObj) => {
+    if (!dateObj) return { min: null, max: null };
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth();
+    const primerValido = new Date(year, month, 2);
+    const ultimoValido = new Date(year, month + 1, 0);
+    const hoy = new Date();
+    const hoySoloDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+
+    return {
+      min: hoySoloDia > primerValido ? hoySoloDia : primerValido,
+      max: ultimoValido,
+    };
+  };
+
+  // El vencimiento tiene que caer dentro del mes de la cuota: la de agosto no puede vencer
+  // en septiembre ni en julio. Mismo criterio que valida el backend.
+  const buildVenceFueraDeMesError = (venceDateObj, mesDateObj) => {
+    if (!venceDateObj || !mesDateObj) return null;
+    const mismoMes = venceDateObj.getFullYear() === mesDateObj.getFullYear()
+      && venceDateObj.getMonth() === mesDateObj.getMonth();
+    if (mismoMes) return null;
+
+    const mesPedido = `${String(mesDateObj.getMonth() + 1).padStart(2, '0')}/${mesDateObj.getFullYear()}`;
+    return `La fecha de vencimiento debe estar dentro del mes de la cuota (${mesPedido}). Elegiste ${venceDateObj.toLocaleDateString('es-AR')}.`;
+  };
 
   const fetchPlanes = async () => {
     try {
@@ -613,6 +649,11 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
       toast.error('Completá un importe válido para crear la cuota.');
       return;
     }
+    const venceFueraDeMes = buildVenceFueraDeMesError(venceDate, mesDate);
+    if (venceFueraDeMes) {
+      toast.error(venceFueraDeMes);
+      return;
+    }
     const cuotaStartDate = buildCuotaStartDate(mesDate);
     if (getLocalDayTime(venceDate) <= getLocalDayTime(cuotaStartDate)) {
       toast.error('La fecha de vencimiento debe ser posterior a la fecha de inicio de la cuota.');
@@ -711,6 +752,8 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
   const handleBulkGenerate = async () => {
     if (!bulkMesDate) { toast.error('Seleccioná un mes válido.'); return; }
     if (!bulkVenceDate) { toast.error('Seleccioná fecha de vencimiento.'); return; }
+    const bulkVenceFueraDeMes = buildVenceFueraDeMesError(bulkVenceDate, bulkMesDate);
+    if (bulkVenceFueraDeMes) { toast.error(bulkVenceFueraDeMes); return; }
     const bulkCuotaStartDate = buildCuotaStartDate(bulkMesDate);
     if (getLocalDayTime(bulkVenceDate) <= getLocalDayTime(bulkCuotaStartDate)) {
       toast.error('La fecha de vencimiento debe ser posterior a la fecha de inicio de la cuota.');
@@ -839,6 +882,35 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
       .toLocaleString('es-AR', { month: 'long', year: 'numeric' });
   };
   const formatDate = (iso) => (iso ? new Date(iso).toLocaleDateString('es-AR') : '–');
+
+  // fechaInicio/fechaFin se guardan como hora de pared en UTC (fechaInicio = 01/08 00:00Z).
+  // Leerlas en hora local las correría un día hacia atrás en Argentina.
+  const formatDayMonthUtc = (iso) => {
+    if (!iso) return null;
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return null;
+    return `${String(date.getUTCDate()).padStart(2, '0')}/${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+  };
+
+  // fechaFin se guarda como "arranque del período siguiente menos 1 ms". Según la zona
+  // horaria del servidor que la escribió, ese instante puede caer ya en el día siguiente
+  // en UTC: 2026-11-01T02:59:59.999Z es en realidad el 31/10. Si la hora UTC es de
+  // madrugada, el último día cubierto es el anterior.
+  const getUltimoDiaCubierto = (iso) => {
+    if (!iso) return null;
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return null;
+    if (date.getUTCHours() < 12) date.setUTCDate(date.getUTCDate() - 1);
+    return date;
+  };
+
+  // Días que la cuota cubre el plan. NO es la fecha de vencimiento (último día para pagar).
+  const formatVigencia = (cuota) => {
+    const desde = formatDayMonthUtc(cuota?.fechaInicio);
+    const hasta = formatDayMonthUtc(getUltimoDiaCubierto(cuota?.fechaFin));
+    if (!desde || !hasta) return null;
+    return `${desde} al ${hasta}`;
+  };
   const formatCurrency = (val) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(val);
 
   const datePickerClass = 'custom-datepicker custom-datepicker-mes';
@@ -1024,9 +1096,10 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
               <thead>
                 <tr>
                   <th>Usuario</th>
-                  <th>Mes</th>
+                  <th title="Mes de la cuota y días que cubre el plan">Mes</th>
+                  <th title="Manual: alta individual, proporcional al mes. Masiva: generación del mes, período completo del plan">Creación</th>
                   <th>Importe</th>
-                  <th>Vence</th>
+                  <th title="Último día que tiene el alumno para pagar">Vence</th>
                   <th>Plan</th>
                   <th>Estado</th>
                   <th>Forma de Pago</th>
@@ -1040,7 +1113,23 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                     <td data-label="Usuario">
                       {c.User ? `${c.User.nombre} ${c.User.apellido}` : '–'}
                     </td>
-                    <td data-label="Mes" className='cuotas-usuario-mes-col'>{formatMonth(c.mes)}</td>
+                    <td data-label="Mes" className='cuotas-usuario-mes-col'>
+                      <span className="cuotas-mes-nombre">{formatMonth(c.mes)}</span>
+                      {formatVigencia(c) && (
+                        <span className="cuotas-mes-vigencia" title="Días que la cuota cubre el plan">
+                          ({formatVigencia(c)})
+                        </span>
+                      )}
+                    </td>
+                    <td data-label="Creación">
+                      {c.origen ? (
+                        <span className={`cuotas-origen cuotas-origen-${c.origen.toLowerCase()}`}>
+                          {CUOTA_ORIGEN_LABEL[c.origen] || c.origen}
+                        </span>
+                      ) : (
+                        <span className="cuotas-origen-desconocido" title="Cuota anterior al registro del origen">–</span>
+                      )}
+                    </td>
                     <td data-label="Importe">{formatCurrency(c.importe)}</td>
                     <td data-label="Vence">{formatDate(c.vence)}</td>
                     <td data-label="Plan">{c.planNombreSnapshot ?? '–'}</td>
@@ -1151,7 +1240,11 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                   <label>Mes</label>
                   <ReactDatePicker
                     selected={mesDate}
-                    onChange={date => setMesDate(date)}
+                    onChange={date => {
+                      setMesDate(date);
+                      // El vencimiento anterior puede quedar fuera del mes nuevo: se limpia.
+                      if (buildVenceFueraDeMesError(venceDate, date)) setVenceDate(null);
+                    }}
                     dateFormat="MM/yyyy"
                     showMonthYearPicker
                     placeholderText="Seleccioná mes y año"
@@ -1167,8 +1260,12 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                     selected={venceDate}
                     onChange={date => setVenceDate(date)}
                     dateFormat="dd/MM/yyyy"
-                    placeholderText="Seleccioná fecha de vencimiento"
+                    placeholderText={mesDate ? 'Seleccioná fecha de vencimiento' : 'Elegí primero el mes'}
                     className="custom-datepicker"
+                    disabled={!mesDate}
+                    minDate={buildVenceRange(mesDate).min}
+                    maxDate={buildVenceRange(mesDate).max}
+                    openToDate={venceDate || buildVenceRange(mesDate).min || undefined}
                     required
                   />
                 </div>
@@ -1309,7 +1406,11 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                   <label>Mes</label>
                   <ReactDatePicker
                     selected={bulkMesDate}
-                    onChange={date => setBulkMesDate(date)}
+                    onChange={date => {
+                      setBulkMesDate(date);
+                      // El vencimiento anterior puede quedar fuera del mes nuevo: se limpia.
+                      if (buildVenceFueraDeMesError(bulkVenceDate, date)) setBulkVenceDate(null);
+                    }}
                     dateFormat="MM/yyyy"
                     showMonthYearPicker
                     placeholderText="MM/AAAA"
@@ -1323,8 +1424,12 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                     selected={bulkVenceDate}
                     onChange={date => setBulkVenceDate(date)}
                     dateFormat="dd/MM/yyyy"
-                    placeholderText="Seleccione fecha de vencimiento"
+                    placeholderText={bulkMesDate ? 'Seleccione fecha de vencimiento' : 'Elegí primero el mes'}
                     className="custom-datepicker"
+                    disabled={!bulkMesDate}
+                    minDate={buildVenceRange(bulkMesDate).min}
+                    maxDate={buildVenceRange(bulkMesDate).max}
+                    openToDate={bulkVenceDate || buildVenceRange(bulkMesDate).min || undefined}
                   />
                 </div>
               </div>

@@ -81,6 +81,30 @@
   color: #da311e;
 }
 
+/* Origen del alta. Deliberadamente neutro: el único color de la fila lo pone el badge de
+   Estado, que es el dato accionable. Acá alcanza con distinguir de un vistazo. */
+.cuotas-origen {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid var(--border-color);
+  color: var(--text-color-distinct);
+}
+
+.cuotas-origen-masiva {
+  background-color: var(--background-hover-color);
+  border-color: transparent;
+}
+
+.cuotas-origen-desconocido {
+  color: var(--text-color-distinct);
+  opacity: 0.6;
+}
+
 .text-error {
   color: #c00;
 }
@@ -729,11 +753,27 @@
 
 /* Mes capitalizado sólo la primera letra */
 .cuotas-usuario-mes-col {
+  line-height: 1.35;
+}
+
+.cuotas-mes-nombre {
+  display: block;
   text-transform: lowercase;
 }
 
-.cuotas-usuario-mes-col::first-letter {
+.cuotas-mes-nombre::first-letter {
   text-transform: uppercase;
+}
+
+/* Vigencia del plan (días que cubre la cuota). Deliberadamente en segundo plano para que
+   no compita con la columna "Vence", que es el último día para pagar. */
+.cuotas-mes-vigencia {
+  display: block;
+  font-size: 0.78rem;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
 /* ====== RESPONSIVE ====== */

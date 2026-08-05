@@ -6,6 +6,7 @@ import {
     countPendingFixedReservationsForHorarioFecha,
     getArgentinaDate,
     getHorarioCupoUsage,
+    resolveSlot,
     resolveSlotHorarioIds,
     selectCurrentSlotHorario
 } from "../services/accessRules.service.js";
@@ -80,6 +81,10 @@ const enrichHorariosWithCupos = async <T extends { HorariosClase?: any[] }>(clas
     const horarios = clase.HorariosClase ?? [];
 
     const enrichedHorarios = await Promise.all(horarios.map(async (horario) => {
+        // Un horario desactivado ya no se agenda: sus cupos son los del registro viejo y
+        // mostrarlos sólo confunde. Se devuelve tal cual, sin disponibilidad calculada.
+        if (horario.activo === false) return horario;
+
         const fechaProximoTurno = getNextTurnoDateForHorario(horario);
         const usage = fechaProximoTurno
             ? await getHorarioCupoUsage(horario.ID_HorarioClase, fechaProximoTurno)
@@ -434,21 +439,28 @@ const formatDateTimeForMessage = (date: Date): string => (
     `${String(date.getUTCDate()).padStart(2, '0')}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${date.getUTCFullYear()} ${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')}`
 );
 
-const countActiveFixedTemplatesForHorario = async (tx: any, horarioId: number): Promise<number> => (
-    tx.turnoFijo.count({
+/* Cuenta los alumnos con turno fijo en el slot completo (todos los hermanos), no en un
+   registro suelto: un alumno con fijos en dos hermanos ocupa un solo lugar.
+   Se excluyen las plantillas que nunca se materializan (alumno de baja o con usaTurnosFijos
+   apagado): si contaran, bajar los cupos se rechazaría por asientos fantasma. */
+const countActiveFixedTemplatesForHorario = async (tx: any, horarioIds: number[]): Promise<number> => {
+    const fijos = await tx.turnoFijo.findMany({
         where: {
-            ID_HorarioClase: horarioId,
+            ID_HorarioClase: { in: horarioIds },
             activo: true,
+            User: { is: { estado: true, usaTurnosFijos: true } },
         },
-    })
-);
+        select: { ID_Usuario: true },
+    });
+    return new Set(fijos.map((fijo: { ID_Usuario: number }) => fijo.ID_Usuario)).size;
+};
 
 const assertFixedTemplatesFitCapacity = async (
     tx: any,
-    horarioId: number,
+    horarioIds: number[],
     cupos: number,
 ): Promise<void> => {
-    const fixedCount = await countActiveFixedTemplatesForHorario(tx, horarioId);
+    const fixedCount = await countActiveFixedTemplatesForHorario(tx, horarioIds);
     if (fixedCount > cupos) {
         throw new HorarioCapacityError(`No se puede guardar el horario con ${cupos} cupo(s): tiene ${fixedCount} turno(s) fijo(s) asignado(s).`);
     }
@@ -456,7 +468,7 @@ const assertFixedTemplatesFitCapacity = async (
 
 const assertProjectedHorarioCapacity = async (
     tx: any,
-    horarioId: number,
+    horarioIds: number[],
     cupos: number,
     projectedActiveTurnos: Array<{ ID_Usuario: number; fecha: Date }>,
     now: Date,
@@ -480,12 +492,20 @@ const assertProjectedHorarioCapacity = async (
     }
 
     for (const group of byDate.values()) {
-        const reservasFijasPendientes = group.fecha > now
-            ? await countPendingFixedReservationsForHorarioFecha(horarioId, group.fecha, {
+        // Las fechas pasadas no se validan: esa clase ya ocurrió y el cupo sólo gobierna
+        // las reservas futuras. Bloquear un cambio de cupos por lo que pasó una semana atrás
+        // impediría incluso SUBIR la capacidad de un horario que históricamente se llenó.
+        if (group.fecha <= now) continue;
+
+        const reservasFijasPendientes = await countPendingFixedReservationsForHorarioFecha(
+            horarioIds[0],
+            group.fecha,
+            {
                 releaseFixedReservationForUserIds: group.userIds,
                 client: tx,
-            })
-            : 0;
+                horarioIds,
+            },
+        );
         const totalComprometido = group.turnosActivos + reservasFijasPendientes;
 
         if (totalComprometido > cupos) {
@@ -591,6 +611,8 @@ export const modifyHorarioSingle = async (req: Request, res: Response) => {
             const incomingCupos = Number(cupos ?? existing.cupos);
             assertValidCuposValue(incomingCupos);
 
+            const slot = await resolveSlot(idHorario, tx);
+
             if (updateMode === 'preserve') {
                 // preserve: si hay turnos asociados -> crear nuevo y desactivar viejo (preservar turnos)
                 const turnosCount = await tx.turno.count({ where: { ID_HorarioClase: idHorario } });
@@ -607,7 +629,7 @@ export const modifyHorarioSingle = async (req: Request, res: Response) => {
                 const sameCupos = Number(existing.cupos ?? 0) === incomingCupos;
 
                 if (!turnosCount) {
-                    await assertFixedTemplatesFitCapacity(tx, idHorario, incomingCupos);
+                    await assertFixedTemplatesFitCapacity(tx, slot.horarioIds, incomingCupos);
 
                     // no hay turnos -> actualizar directamente el registro
                     const updated = await tx.horarioClase.update({
@@ -629,7 +651,38 @@ export const modifyHorarioSingle = async (req: Request, res: Response) => {
                     return { mode: 'preserve', action: 'no_change_existing_with_turnos', message: 'Los valores ingresados son iguales a los del registro existente; no se creó nuevo horario.' };
                 }
 
-                await assertFixedTemplatesFitCapacity(tx, idHorario, incomingCupos);
+                // Cambiar SÓLO los cupos no invalida los turnos ya sacados: es la misma sesión
+                // con otra capacidad. Se actualiza el registro en su lugar. Clonar acá era el
+                // origen de los slots fragmentados (un horario nuevo y el viejo desactivado,
+                // con los turnos y los turnos fijos colgando del muerto).
+                if (sameDay && sameTime && sameTimeFin) {
+                    await assertFixedTemplatesFitCapacity(tx, slot.horarioIds, incomingCupos);
+
+                    const turnosDelSlot = await tx.turno.findMany({
+                        where: {
+                            ID_HorarioClase: { in: slot.horarioIds },
+                            estado: { in: ACTIVE_TURNO_STATES },
+                        },
+                        select: { ID_Usuario: true, fecha: true },
+                    });
+                    await assertProjectedHorarioCapacity(
+                        tx,
+                        slot.horarioIds,
+                        incomingCupos,
+                        turnosDelSlot,
+                        getArgentinaDate(),
+                    );
+
+                    // La capacidad se escribe sobre el horario vigente del slot: es el que
+                    // leen la agenda, el calendario y la generación de cuotas.
+                    const updated = await tx.horarioClase.update({
+                        where: { ID_HorarioClase: slot.vigente.ID_HorarioClase },
+                        data: { cupos: incomingCupos },
+                    });
+                    return { mode: 'preserve', action: 'updated_cupos_in_place', horario: updated };
+                }
+
+                await assertFixedTemplatesFitCapacity(tx, slot.horarioIds, incomingCupos);
 
                 // crear nuevo y desactivar viejo
                 const created = await tx.horarioClase.create({
@@ -688,9 +741,11 @@ export const modifyHorarioSingle = async (req: Request, res: Response) => {
                     },
                 });
                 const futurosIds = new Set(futuros.map(ft => ft.id_turno));
+                // Se proyecta sobre TODO el slot: los turnos de los hermanos ocupan la misma
+                // sesión aunque no se muevan (sólo se mueven los del horario que se edita).
                 const activeTurnos = await tx.turno.findMany({
                     where: {
-                        ID_HorarioClase: idHorario,
+                        ID_HorarioClase: { in: slot.horarioIds },
                         estado: { in: ACTIVE_TURNO_STATES },
                     },
                     select: {
@@ -704,8 +759,8 @@ export const modifyHorarioSingle = async (req: Request, res: Response) => {
                     fecha: futurosIds.has(turno.id_turno) ? newDateUtc : turno.fecha,
                 }));
 
-                await assertFixedTemplatesFitCapacity(tx, idHorario, incomingCupos);
-                await assertProjectedHorarioCapacity(tx, idHorario, incomingCupos, projectedActiveTurnos, todayUtc);
+                await assertFixedTemplatesFitCapacity(tx, slot.horarioIds, incomingCupos);
+                await assertProjectedHorarioCapacity(tx, slot.horarioIds, incomingCupos, projectedActiveTurnos, todayUtc);
 
                 // instant: actualizar el horario y mover turnos futuros al próximo día objetivo respecto a HOY (UTC)
                 const updatedHorario = await tx.horarioClase.update({
