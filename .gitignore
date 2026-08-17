@@ -6,6 +6,10 @@ node_modules/
 .env.local
 .env.*.local
 
+# dumps de la base: tienen datos personales de socios reales
+database/*.sql
+database/*.sql.gz
+
 # backend build
 backend/dist/
 backend/tsconfig.tsbuildinfo
