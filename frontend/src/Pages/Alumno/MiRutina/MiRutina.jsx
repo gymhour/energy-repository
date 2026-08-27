@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '../../../App.css';
 import './MiRutina.css';
+import BloqueAccordion from '../../../Components/utils/BloqueAccordion/BloqueAccordion';
 import SidebarMenu from '../../../Components/SidebarMenu/SidebarMenu.jsx';
 import PrimaryButton from '../../../Components/utils/PrimaryButton/PrimaryButton.jsx';
 import CustomDropdown from '../../../Components/utils/CustomDropdown/CustomDropdown.jsx';
@@ -148,6 +149,7 @@ const renderDropSetBlock = (b) => {
         to={`/alumno/ejercicios/${ej.ID_Ejercicio}`}
         className="ejercicio-link"
         title="Ver detalle del ejercicio"
+        onClick={(e) => e.stopPropagation()}
       >
         {nombre}
       </Link>
@@ -158,16 +160,17 @@ const renderDropSetBlock = (b) => {
   );
 
   return (
-    <div className="bloque-card dropset-card">
-      <p className="bloque-header">
-        DROPSET — {titleNode}
-      </p>
+    <BloqueAccordion
+      titulo={b.titulo}
+      header={<>DROPSET — {titleNode}</>}
+      className="dropset-card"
+    >
       <ul className="bloque-list dropset-list">
         {items.map((it, idx) => (
           <li key={idx}>{repsWeightLine(it)}</li>
         ))}
       </ul>
-    </div>
+    </BloqueAccordion>
   );
 };
 /* ============================================================= */
@@ -231,7 +234,11 @@ const renderBloques = (bloques) => {
 
       const fallback = items.length === 0 ? setsRepsFallback(b) : null;
       return (
-        <div key={i} className='bloque-card'>
+        <BloqueAccordion
+          key={i}
+          titulo={b.titulo}
+          header='Series y repeticiones'
+        >
           {(items.length > 0) ? (
             <ul className='bloque-list'>
               {items.map((it, j) => (
@@ -245,14 +252,16 @@ const renderBloques = (bloques) => {
               </ul>
             )
           )}
-        </div>
+        </BloqueAccordion>
       );
     }
 
     return (
-      <div key={i} className='bloque-card'>
-        {header && <p className='bloque-header'>{header}</p>}
-
+      <BloqueAccordion
+        key={i}
+        titulo={b.titulo}
+        header={header}
+      >
         {items.length > 0 && (
           <ul className='bloque-list'>
             {items.map((it, j) => (
@@ -266,7 +275,7 @@ const renderBloques = (bloques) => {
         {b.type === 'ROUNDS' && b.descansoRonda ? (
           <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
         ) : null}
-      </div>
+      </BloqueAccordion>
     );
   });
 };

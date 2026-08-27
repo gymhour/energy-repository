@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import '../../../App.css';
 import './RutinasAdmin.css';
+import BloqueAccordion from '../../../Components/utils/BloqueAccordion/BloqueAccordion.jsx';
 import SidebarMenu from '../../../Components/SidebarMenu/SidebarMenu.jsx';
 import PrimaryButton from '../../../Components/utils/PrimaryButton/PrimaryButton.jsx';
 import ConfirmationPopup from '../../../Components/utils/ConfirmationPopUp/ConfirmationPopUp';
@@ -97,6 +98,74 @@ const setsRepsFallback = (b) => {
   return txt || null;
 };
 
+const renderEjercicioItem = (it, tipo) => {
+  const txt = itemText(it, tipo);
+  const id = it?.ejercicio?.ID_Ejercicio || it?.ID_Ejercicio;
+  const esGenerico = it?.ejercicio?.esGenerico ?? true;
+
+  if (id && esGenerico === false) {
+    return (
+      <span className="ejercicio-link-wrap">
+        <Link
+          to={`/admin/ejercicios/${id}`}
+          className="ejercicio-link"
+          title="Ver detalle del ejercicio"
+        >
+          {txt}
+        </Link>
+        <Video className="video-icon" size={20} aria-hidden="true" />
+      </span>
+    );
+  }
+
+  return <span>{txt}</span>;
+};
+
+/* Render único de bloques: antes estaba duplicado en las dos ramas (1 día / acordeón) */
+const renderBloques = (bloques) => {
+  return (bloques || []).map((b, i) => {
+    const items = getBloqueItems(b);
+    const header = headerForBlock(b);
+
+    if (b.type === 'SETS_REPS') {
+      const fallback = items.length === 0 ? setsRepsFallback(b) : null;
+      return (
+        <BloqueAccordion
+          key={i}
+          titulo={b.titulo}
+          header='Series y repeticiones'
+        >
+          {(items.length > 0)
+            ? <ul className='bloque-list'>{items.map((it, j) => <li key={j}>{renderEjercicioItem(it, b.type)}</li>)}</ul>
+            : fallback && <ul className='bloque-list'><li>{fallback}</li></ul>
+          }
+        </BloqueAccordion>
+      );
+    }
+
+    return (
+      <BloqueAccordion
+        key={i}
+        titulo={b.titulo}
+        header={header}
+      >
+        {items.length > 0 && (
+          <ul className='bloque-list'>
+            {items.map((it, j) => <li key={j}>{renderEjercicioItem(it, b.type)}</li>)}
+          </ul>
+        )}
+        {b.type === 'ROUNDS' && b.descansoRonda != null && (
+          <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
+        )}
+        {/* Nota TABATA */}
+        {b.type === 'TABATA' && b.descTabata && (
+          <p className='bloque-footnote'>Descanso: {b.descTabata}</p>
+        )}
+      </BloqueAccordion>
+    );
+  });
+};
+
 /* ==================================================== */
 
 const RutinasAdmin = () => {
@@ -106,30 +175,6 @@ const RutinasAdmin = () => {
   const [selectedRutinaId, setSelectedRutinaId] = useState(null);
   const [openState, setOpenState] = useState({});
   const navigate = useNavigate();
-
-  // === Nueva función: renderEjercicioItem ===
-  const renderEjercicioItem = (it, tipo) => {
-    const txt = itemText(it, tipo);
-    const id = it?.ejercicio?.ID_Ejercicio || it?.ID_Ejercicio;
-    const esGenerico = it?.ejercicio?.esGenerico ?? true;
-
-    if (id && esGenerico === false) {
-      return (
-        <span className="ejercicio-link-wrap">
-          <Link
-            to={`/admin/ejercicios/${id}`}
-            className="ejercicio-link"
-            title="Ver detalle del ejercicio"
-          >
-            {txt}
-          </Link>
-          <Video className="video-icon" size={20} aria-hidden="true" />
-        </span>
-      );
-    }
-
-    return <span>{txt}</span>;
-  };
 
   const fetchRutinas = async () => {
     try {
@@ -217,6 +262,7 @@ const RutinasAdmin = () => {
         });
         return {
           type: b?.type || 'SETS_REPS',
+          titulo: b?.titulo ?? null,
           setsReps: b?.setsReps ?? null,
           nombreEj: b?.nombreEj ?? null,
           weight: b?.weight ?? null,
@@ -333,43 +379,7 @@ const RutinasAdmin = () => {
                     {dias[0] && <h4>{dias[0].nombre}</h4>}
                     {dias[0]?.descripcion && <p className='dia-desc'>{dias[0].descripcion}</p>}
 
-                    {(dias[0]?.bloques || []).map((b, i) => {
-                      const items = getBloqueItems(b);
-                      const header = headerForBlock(b);
-
-                      if (b.type === 'SETS_REPS') {
-                        const fallback = items.length === 0 ? setsRepsFallback(b) : null;
-                        return (
-                          <div key={i} className='bloque-card'>
-                            {(items.length > 0) ? (
-                              <ul className='bloque-list'>
-                                {items.map((it, j) => <li key={j}>{renderEjercicioItem(it, b.type)}</li>)}
-                              </ul>
-                            ) : (
-                              fallback && <ul className='bloque-list'><li>{fallback}</li></ul>
-                            )}
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div key={i} className='bloque-card'>
-                          {header && <p className='bloque-header'>{header}</p>}
-                          {items.length > 0 && (
-                            <ul className='bloque-list'>
-                              {items.map((it, j) => <li key={j}>{renderEjercicioItem(it, b.type)}</li>)}
-                            </ul>
-                          )}
-                          {b.type === 'ROUNDS' && b.descansoRonda != null && (
-                            <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
-                          )}
-                          {/* Nota TABATA */}
-                          {b.type === 'TABATA' && b.descTabata && (
-                            <p className='bloque-footnote'>Descanso: {b.descTabata}</p>
-                          )}
-                        </div>
-                      );
-                    })}
+                    {renderBloques(dias[0]?.bloques)}
                   </div>
                 ) : (
                   <div className='rutina-dias-accordion'>
@@ -389,40 +399,7 @@ const RutinasAdmin = () => {
                           {isOpen && (
                             <div className='accordion-content'>
                               {d.descripcion && <p className='dia-desc'>{d.descripcion}</p>}
-                              {(d.bloques || []).map((b, i) => {
-                                const items = getBloqueItems(b);
-                                const header = headerForBlock(b);
-
-                                if (b.type === 'SETS_REPS') {
-                                  const fallback = items.length === 0 ? setsRepsFallback(b) : null;
-                                  return (
-                                    <div key={i} className='bloque-card'>
-                                      {(items.length > 0)
-                                        ? <ul className='bloque-list'>{items.map((it, j) => <li key={j}>{renderEjercicioItem(it, b.type)}</li>)}</ul>
-                                        : fallback && <ul className='bloque-list'><li>{fallback}</li></ul>
-                                      }
-                                    </div>
-                                  );
-                                }
-
-                                return (
-                                  <div key={i} className='bloque-card'>
-                                    {header && <p className='bloque-header'>{header}</p>}
-                                    {items.length > 0 && (
-                                      <ul className='bloque-list'>
-                                        {items.map((it, j) => <li key={j}>{renderEjercicioItem(it, b.type)}</li>)}
-                                      </ul>
-                                    )}
-                                    {b.type === 'ROUNDS' && b.descansoRonda != null && (
-                                      <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
-                                    )}
-                                    {/* Nota TABATA */}
-                                    {b.type === 'TABATA' && b.descTabata && (
-                                      <p className='bloque-footnote'>Descanso: {b.descTabata}</p>
-                                    )}
-                                  </div>
-                                );
-                              })}
+                              {renderBloques(d.bloques)}
                             </div>
                           )}
                         </div>

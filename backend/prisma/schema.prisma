@@ -315,6 +315,7 @@ model Semana {
 model Bloque {
   ID_Bloque                   Int               @id @default(autoincrement())
   type                        BlockType
+  titulo                      String? // Título libre del bloque (ej: "RONDA FULL BODY WARM UP")
   // Relación con la rutina
   ID_Rutina                   Int
   rutina                      Rutina            @relation(fields: [ID_Rutina], references: [ID_Rutina], onDelete: Cascade)
