@@ -225,6 +225,16 @@
     font-size: 0.95rem;
 }
 
+/* Título libre que el entrenador le pone al bloque */
+.bloque-titulo {
+    margin: 0 0 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+}
+
 .bloque-header {
     margin: 0 0 6px;
     font-weight: 600;

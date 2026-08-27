@@ -1,0 +1,80 @@
+/* Card de bloque plegable — mismo lenguaje visual que .accordion-item (días/semanas),
+   pero un escalón más liviano porque va anidada dentro de un día. */
+.bloque-card.bloque-collapsible {
+    border: 1px solid var(--border-color);
+    background: var(--background-color-distinct);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 6px 0;
+    padding: 0;
+    line-height: normal;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.bloque-card.bloque-collapsible.open {
+    background: var(--background-color);
+}
+
+.bloque-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.bloque-trigger:hover,
+.bloque-trigger:focus-visible {
+    background: var(--background-hover-color);
+    outline: none;
+}
+
+.bloque-trigger-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* dentro del trigger los textos son inline: sin márgenes de <p> */
+.bloque-trigger .bloque-titulo,
+.bloque-trigger .bloque-header {
+    margin: 0;
+}
+
+.bloque-trigger .bloque-header {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.bloque-trigger-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    color: var(--text-color-distinct);
+}
+
+.bloque-count {
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.bloque-content {
+    padding: 10px 14px 12px;
+    border-top: 1px dashed var(--border-color);
+    line-height: 28px;
+}
+
+/* el título del bloque ya se muestra en el trigger */
+.bloque-content .bloque-titulo {
+    display: none;
+}
+
+@media screen and (max-width: 500px) {
+    .bloque-count {
+        display: none;
+    }
+}

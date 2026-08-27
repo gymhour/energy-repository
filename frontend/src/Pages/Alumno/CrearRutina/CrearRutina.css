@@ -72,6 +72,7 @@
 .cant-rondas-subctn-input-chico,
 .cant-rondas-subctn-input-grande,
 .weight-input,
+.block-titulo-input,
 .info-search {
     border: 1px solid var(--border-color);
     border-radius: 10px;
@@ -96,6 +97,7 @@
 .cant-rondas-subctn-input-chico:focus,
 .cant-rondas-subctn-input-grande:focus,
 .weight-input:focus,
+.block-titulo-input:focus,
 .info-search:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px var(--background-hover-color);
@@ -105,6 +107,7 @@
 .day-meta input::placeholder,
 .series-input::placeholder,
 .exercise-input::placeholder,
+.block-titulo-input::placeholder,
 .weight-input::placeholder {
     color: var(--text-color-distinct);
     opacity: 0.72;
@@ -146,11 +149,20 @@
 }
 
 .block-title {
-    margin: 0 0 16px 0;
+    margin: 0 0 10px 0;
     color: var(--text-color);
     font-size: 16px;
     font-weight: 500;
     letter-spacing: 0;
+}
+
+/* Título libre del bloque */
+.block-titulo-input {
+    width: 100%;
+    margin: 0 0 16px 0;
+    padding: 10px 12px;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 /* Acciones del bloque (arrastrar + eliminar) */

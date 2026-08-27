@@ -10,6 +10,7 @@ import SecondaryButton from '../../../Components/utils/SecondaryButton/Secondary
 import ConfirmationPopup from '../../../Components/utils/ConfirmationPopUp/ConfirmationPopUp';
 import { ChevronDown, ChevronUp, Copy, Edit, Trash2, Video, MoreVertical, FileSpreadsheet, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import '../../Entrenador/RutinasAsignadas/RutinasAsignadas.css';
+import BloqueAccordion from '../../../Components/utils/BloqueAccordion/BloqueAccordion';
 
 /* ===================== Helpers ===================== */
 const WEEK_ORDER = [
@@ -190,6 +191,7 @@ const renderDropSetBlock = (b) => {
         to={`/admin/ejercicios/${ej.ID_Ejercicio}`}
         className="ejercicio-link"
         title="Ver detalle del ejercicio"
+        onClick={(e) => e.stopPropagation()}
       >
         {nombre}
       </Link>
@@ -200,16 +202,18 @@ const renderDropSetBlock = (b) => {
   );
 
   return (
-    <div className="bloque-card dropset-card">
-      <p className="bloque-header">
-        DROPSET — {titleNode}
-      </p>
+    <BloqueAccordion
+      titulo={b.titulo}
+      header={<>DROPSET — {titleNode}</>}
+      cantidad={items.length}
+      className="dropset-card"
+    >
       <ul className="bloque-list dropset-list">
         {items.map((it, idx) => (
           <li key={idx}>{repsWeightLine(it)}</li>
         ))}
       </ul>
-    </div>
+    </BloqueAccordion>
   );
 };
 
@@ -225,7 +229,12 @@ const renderBloques = (bloques) => {
       }
       const fallback = items.length === 0 ? setsRepsFallback(b) : null;
       return (
-        <div key={i} className='bloque-card'>
+        <BloqueAccordion
+          key={i}
+          titulo={b.titulo}
+          header='Series y repeticiones'
+          cantidad={items.length}
+        >
           {(items.length > 0) ? (
             <ul className='bloque-list'>
               {items.map((it, j) => (
@@ -239,13 +248,17 @@ const renderBloques = (bloques) => {
               </ul>
             )
           )}
-        </div>
+        </BloqueAccordion>
       );
     }
 
     return (
-      <div key={i} className='bloque-card'>
-        {header && <p className='bloque-header'>{header}</p>}
+      <BloqueAccordion
+        key={i}
+        titulo={b.titulo}
+        header={header}
+        cantidad={items.length}
+      >
         {items.length > 0 && (
           <ul className='bloque-list'>
             {items.map((it, j) => (
@@ -267,7 +280,7 @@ const renderBloques = (bloques) => {
         {b.type === 'ROUNDS' && b.descansoRonda != null && (
           <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
         )}
-      </div>
+      </BloqueAccordion>
     );
   });
 };
@@ -608,6 +621,7 @@ const RutinasAsignadas = () => {
 
         return {
           type: b?.type || 'SETS_REPS',
+          titulo: b?.titulo ?? null,
           setsReps: b?.setsReps ?? null,
           nombreEj: b?.nombreEj ?? null,
           weight: b?.weight ?? null,

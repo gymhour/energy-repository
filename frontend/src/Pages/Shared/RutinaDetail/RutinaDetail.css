@@ -616,3 +616,12 @@
         aspect-ratio: auto;
     }
 }
+
+/* Título libre que el entrenador le pone al bloque */
+.bloque-titulo {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+}

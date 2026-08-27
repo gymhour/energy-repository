@@ -178,6 +178,7 @@ export const getAllRutinasWithDetails = async (req: Request, res: Response): Pro
                 const bloqueMapped = {
                     ID_Bloque: blo.ID_Bloque,
                     type: blo.type,
+                    titulo: (blo as any).titulo ?? null,
                     setsReps: blo.setsReps,
                     nombreEj: blo.nombreEj,
                     weight: blo.weight,
@@ -436,6 +437,7 @@ export const getRutinaById = async (req: Request, res: Response): Promise<void> 
             const bloqueMapped = {
                 ID_Bloque: blo.ID_Bloque,
                 type: blo.type,
+                titulo: (blo as any).titulo ?? null,
                 setsReps: blo.setsReps,
                 nombreEj: blo.nombreEj,
                 weight: blo.weight,
@@ -642,6 +644,7 @@ interface BloqueEjercicioInput {
 
 interface BloqueInput {
     type: BlockType;
+    titulo?: string | null;   // <-- título libre del bloque
     setsReps?: string | null;
     descansoRonda?: number | null;
     cantRondas?: number | null;
@@ -850,6 +853,7 @@ export const updateRutinaWithBlocks = async (req: Request, res: Response): Promi
                 const createdBloque = await prisma.bloque.create({
                     data: {
                         type: blo.type as any,
+                        titulo: blo.titulo ?? null,
                         ID_Rutina: idRutina,
                         rutinaDiaId: dayItem.rutinaDiaId,
                         setsReps: blo.setsReps ?? null,
@@ -965,6 +969,7 @@ export const updateRutinaWithBlocks = async (req: Request, res: Response): Promi
             const bloqueMapped = {
                 ID_Bloque: blo.ID_Bloque,
                 type: blo.type,
+                titulo: (blo as any).titulo ?? null,
                 setsReps: blo.setsReps,
                 nombreEj: blo.nombreEj,
                 weight: blo.weight,
@@ -1641,6 +1646,7 @@ export const createRutinaWithBlocks = async (req: Request, res: Response): Promi
                 const createdBloque = await prisma.bloque.create({
                     data: {
                         type: blo.type as any,
+                        titulo: blo.titulo ?? null,
                         ID_Rutina: rutinaId,
                         rutinaDiaId: dayItem.rutinaDiaId,
                         setsReps: blo.setsReps ?? null,
@@ -1756,6 +1762,7 @@ export const createRutinaWithBlocks = async (req: Request, res: Response): Promi
             const bloqueMapped = {
                 ID_Bloque: blo.ID_Bloque,
                 type: blo.type,
+                titulo: (blo as any).titulo ?? null,
                 setsReps: blo.setsReps,
                 nombreEj: blo.nombreEj,
                 weight: blo.weight,
@@ -2207,6 +2214,7 @@ export const getRutinasByUsuario = async (req: Request, res: Response): Promise<
                 const bloqueMapped = {
                     ID_Bloque: blo.ID_Bloque,
                     type: blo.type,
+                    titulo: (blo as any).titulo ?? null,
                     setsReps: blo.setsReps,
                     nombreEj: blo.nombreEj,
                     weight: blo.weight,
@@ -2362,6 +2370,7 @@ export const getRutinasByEntrenador = async (req: Request, res: Response): Promi
                 const bloqueMapped = {
                     ID_Bloque: blo.ID_Bloque,
                     type: blo.type,
+                    titulo: (blo as any).titulo ?? null,
                     setsReps: blo.setsReps,
                     nombreEj: blo.nombreEj,
                     weight: blo.weight,
@@ -2515,6 +2524,7 @@ export const getRutinasByAdmins = async (req: Request, res: Response): Promise<v
                 const bloqueMapped = {
                     ID_Bloque: blo.ID_Bloque,
                     type: blo.type,
+                    titulo: (blo as any).titulo ?? null,
                     setsReps: blo.setsReps,
                     nombreEj: blo.nombreEj,
                     weight: blo.weight,
@@ -2656,6 +2666,7 @@ export const getRutinasByDayOfWeek = async (req: Request, res: Response): Promis
                 const bloqueMapped = {
                     ID_Bloque: blo.ID_Bloque,
                     type: blo.type,
+                    titulo: (blo as any).titulo ?? null,
                     setsReps: blo.setsReps,
                     nombreEj: blo.nombreEj,
                     weight: blo.weight,
@@ -2801,6 +2812,7 @@ export const getRutinasAsignadas = async (req: Request, res: Response): Promise<
                 const bloqueMapped = {
                     ID_Bloque: blo.ID_Bloque,
                     type: blo.type,
+                    titulo: (blo as any).titulo ?? null,
                     setsReps: blo.setsReps,
                     nombreEj: blo.nombreEj,
                     weight: blo.weight,

@@ -147,7 +147,7 @@ const getRandomExercise = () =>
     "Elevaciones laterales 8kg"
   ][Math.floor(Math.random() * 7)];
 
-const makeEmptyBlock = (selectedType) => {
+const buildEmptyBlock = (selectedType) => {
   const baseSet = {
     series: '',
     exercise: '',
@@ -220,6 +220,12 @@ const makeEmptyBlock = (selectedType) => {
         data: { setsReps: [{ ...baseSet }] }
       };
   }
+};
+
+// Todo bloque, sea del tipo que sea, admite un título libre (ej: "RONDA FULL BODY WARM UP")
+const makeEmptyBlock = (selectedType) => {
+  const block = buildEmptyBlock(selectedType);
+  return { ...block, data: { titulo: '', ...block.data } };
 };
 
 /* ==== Helpers para leer bloques desde API (incluye detección de DROPSET) ==== */
@@ -428,9 +434,8 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
   const [tipoRutina, setTipoRutina] = useState("clasica"); // "clasica" | "simple"
   const [urlPlanificacion, setUrlPlanificacion] = useState("");
   const gruposMusculares = [
-    "Pecho", "Espalda", "Piernas", "Brazos", "Hombros",
-    "Abdominales", "Glúteos", "Tren Superior", "Tren Inferior",
-    "Full Body", "Mixto"
+    "Empuje tren superior", "Tracción tren inferior", "Dominantes de cadera",
+    "Dominante de rodilla", "Core", "Secundarios"
   ];
 
   const [userOptions, setUserOptions] = useState([]);
@@ -704,14 +709,17 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
             ? 'DROPSET'
             : (apiToDisplayType[b.type] || b.type);
 
-          const data = isDrop
-            ? {
-              exerciseName: converted.exerciseName,
-              exerciseId: converted.exerciseId,
-              exercisePlaceholder: converted.exercisePlaceholder,
-              setsReps: converted.setsReps
-            }
-            : converted;
+          const data = {
+            titulo: b.titulo || '',
+            ...(isDrop
+              ? {
+                exerciseName: converted.exerciseName,
+                exerciseId: converted.exerciseId,
+                exercisePlaceholder: converted.exercisePlaceholder,
+                setsReps: converted.setsReps
+              }
+              : converted)
+          };
 
           return {
             id: cryptoRandomId(),
@@ -1446,6 +1454,8 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
       const bloques = [];
       (blocksList || []).forEach(block => {
         const type = displayToApiType(block.type);
+        const titulo = (block?.data?.titulo || '').trim() || null;
+        const pushBloque = (bloque) => bloques.push({ ...bloque, titulo });
 
         // DROPSET
         if (type === 'DROPSET') {
@@ -1476,7 +1486,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
           const firstReps = first.series || null;
           const firstWeight = (first.weight || '').trim() || null;
 
-          bloques.push({
+          pushBloque({
             type: 'SETS_REPS',
             setsReps: firstReps,
             nombreEj: name || null,
@@ -1506,7 +1516,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
 
         switch (type) {
           case 'SETS_REPS':
-            bloques.push({
+            pushBloque({
               type,
               setsReps: block.data.setsReps[0]?.series || null,
               nombreEj: block.data.setsReps[0]?.exercise || null,
@@ -1518,7 +1528,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
             break;
 
           case 'ROUNDS':
-            bloques.push({
+            pushBloque({
               type,
               cantRondas: parseInt(block.data.rounds || 0, 10) || null,
               descansoRonda: parseInt(block.data.descanso || 0, 10) || null,
@@ -1527,7 +1537,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
             break;
 
           case 'EMOM':
-            bloques.push({
+            pushBloque({
               type,
               durationMin: parseInt(block.data.totalMinutes || 0, 10) || null,
               bloqueEjercicios
@@ -1535,7 +1545,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
             break;
 
           case 'AMRAP':
-            bloques.push({
+            pushBloque({
               type,
               durationMin: parseInt(block.data.duration || 0, 10) || null,
               bloqueEjercicios
@@ -1543,7 +1553,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
             break;
 
           case 'LADDER':
-            bloques.push({
+            pushBloque({
               type,
               tipoEscalera: (block.data.escaleraType || '').trim() || null,
               bloqueEjercicios
@@ -1551,7 +1561,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
             break;
 
           case 'TABATA':
-            bloques.push({
+            pushBloque({
               type,
               cantSeries: Number.isFinite(parseInt(block.data.cantSeries, 10))
                 ? parseInt(block.data.cantSeries, 10)
@@ -1563,7 +1573,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
             break;
 
           default:
-            bloques.push({ type, bloqueEjercicios });
+            pushBloque({ type, bloqueEjercicios });
         }
       });
       return bloques;
@@ -2230,6 +2240,21 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
                         <h4 className="block-title">
                           {block.type}
                         </h4>
+
+                        {/* Título libre del bloque */}
+                        <input
+                          type="text"
+                          className="block-titulo-input"
+                          placeholder="Título del bloque (opcional). Ej: RONDA FULL BODY WARM UP"
+                          value={block.data.titulo || ''}
+                          onChange={e =>
+                            handleBlockFieldChange(
+                              block.id,
+                              'titulo',
+                              e.target.value
+                            )
+                          }
+                        />
 
                         {/* SERIES Y REPETICIONES */}
                         {block.type ===

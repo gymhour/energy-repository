@@ -223,6 +223,9 @@ const DropSetDetail = ({ bloque }) => {
 
   return (
     <div className="gh-surface dropset-surface" style={{ display: 'grid', gap: 8 }}>
+      {bloque?.titulo && (
+        <p className="bloque-titulo" style={{ margin: 0 }}>{bloque.titulo}</p>
+      )}
       <h4 className="gh-feature-title" style={{ margin: 0 }}>
         {`DROPSET — ${nombre}`}
       </h4>
@@ -525,6 +528,16 @@ const RutinaDetail = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
 
         bloques.forEach((b, iB) => {
           ensureSpace(70);
+
+          // Título libre del bloque (si el entrenador le puso uno)
+          const tituloLibre = (b?.titulo || '').trim();
+          if (tituloLibre) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.setTextColor(0);
+            doc.text(tituloLibre.toUpperCase(), M, cursorY);
+            cursorY += 14;
+          }
 
           // —— DROPSET PDF
           if (b?.type === 'SETS_REPS' && isDropSetBlockPDF(b)) {
@@ -1002,6 +1015,15 @@ const RutinaDetail = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
                                     gap: 12,
                                   }}
                                 >
+                                  {b?.titulo && (
+                                    <p
+                                      className="bloque-titulo"
+                                      style={{ margin: 0 }}
+                                    >
+                                      {b.titulo}
+                                    </p>
+                                  )}
+
                                   {/* header del bloque */}
                                   <div
                                     style={{

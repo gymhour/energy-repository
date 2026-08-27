@@ -8,7 +8,7 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "concurrently -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev": "node scripts/dev.mjs",
     "dev:backend": "npm run dev -w backend",
     "dev:frontend": "npm start -w frontend",
     "build": "npm run build:backend",

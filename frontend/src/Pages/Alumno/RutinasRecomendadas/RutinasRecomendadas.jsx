@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '../../../App.css';
 import '../MiRutina/MiRutina.css';
+import BloqueAccordion from '../../../Components/utils/BloqueAccordion/BloqueAccordion';
 import SidebarMenu from '../../../Components/SidebarMenu/SidebarMenu.jsx';
 import PrimaryButton from '../../../Components/utils/PrimaryButton/PrimaryButton.jsx';
 import SecondaryButton from '../../../Components/utils/SecondaryButton/SecondaryButton.jsx';
@@ -183,6 +184,7 @@ const renderDropSetBlock = (b) => {
         to={`/alumno/ejercicios/${ej.ID_Ejercicio}`}
         className="ejercicio-link"
         title="Ver detalle del ejercicio"
+        onClick={(e) => e.stopPropagation()}
       >
         {nombre}
       </Link>
@@ -193,17 +195,88 @@ const renderDropSetBlock = (b) => {
   );
 
   return (
-    <div className="bloque-card dropset-card">
-      <p className="bloque-header">
-        DROPSET — {titleNode}
-      </p>
+    <BloqueAccordion
+      titulo={b.titulo}
+      header={<>DROPSET — {titleNode}</>}
+      cantidad={items.length}
+      className="dropset-card"
+    >
       <ul className="bloque-list dropset-list">
         {items.map((it, idx) => (
           <li key={idx}>{repsWeightLine(it)}</li>
         ))}
       </ul>
-    </div>
+    </BloqueAccordion>
   );
+};
+
+/* Render único de bloques: antes estaba duplicado en las dos ramas (1 día / acordeón) */
+const renderBloques = (bloques) => {
+  return (bloques || []).map((b, i) => {
+    const items = getBloqueItems(b);
+    const header = blockLabel(b);
+
+    if (b.type === 'SETS_REPS') {
+      if (isDropSetBlock(b)) {
+        return <React.Fragment key={i}>{renderDropSetBlock(b)}</React.Fragment>;
+      }
+
+      const fallback = items.length === 0 ? setsRepsFallback(b) : null;
+      return (
+        <BloqueAccordion
+          key={i}
+          titulo={b.titulo}
+          header='Series y repeticiones'
+          cantidad={items.length}
+        >
+          {(items.length > 0) ? (
+            <ul className='bloque-list'>
+              {items.map((it, j) => (
+                <li key={j}>{renderEjercicioItem(it, b.type)}</li>
+              ))}
+            </ul>
+          ) : (
+            fallback && (
+              <ul className='bloque-list'>
+                <li>{fallback}</li>
+              </ul>
+            )
+          )}
+        </BloqueAccordion>
+      );
+    }
+
+    return (
+      <BloqueAccordion
+        key={i}
+        titulo={b.titulo}
+        header={header}
+        cantidad={items.length}
+      >
+        {items.length > 0 && (
+          <ul className='bloque-list'>
+            {items.map((it, j) => (
+              <li key={j}>{renderEjercicioItem(it, b.type)}</li>
+            ))}
+          </ul>
+        )}
+
+        {b.type === 'TABATA' && (b?.cantSeries || b?.tiempoTrabajoDescansoTabata || b?.descTabata) && (
+          <p className='bloque-footnote'>
+            {b?.cantSeries ? <><b>Series:</b> {b.cantSeries} &middot; </> : null}
+            {b?.tiempoTrabajoDescansoTabata
+              ? <><b>Trabajo/Descanso:</b> {formatWorkRest(b.tiempoTrabajoDescansoTabata)} &middot; </>
+              : null}
+            {b?.descTabata ? <><b>Pausa entre series:</b> {b.descTabata}</> : null}
+          </p>
+        )}
+
+        {b.type === 'ROUNDS' && b?.descansoRonda != null && (
+          <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
+        )}
+      </BloqueAccordion>
+    );
+  });
 };
 
 /* ================================================================== */
@@ -374,59 +447,7 @@ const RutinasRecomendadas = () => {
                       {dias[0] && <h4>{dias[0].nombre}</h4>}
                       {dias[0]?.descripcion && <p className='dia-desc'>{dias[0].descripcion}</p>}
 
-                      {(dias[0]?.bloques || []).map((b, i) => {
-                        const items = getBloqueItems(b);
-                        const header = blockLabel(b);
-
-                        if (b.type === 'SETS_REPS') {
-                          // DROPSET → card especial
-                          if (isDropSetBlock(b)) {
-                            return <React.Fragment key={i}>{renderDropSetBlock(b)}</React.Fragment>;
-                          }
-
-                          const fallback = items.length === 0 ? setsRepsFallback(b) : null;
-                          return (
-                            <div key={i} className='bloque-card'>
-                              {(items.length > 0) ? (
-                                <ul className='bloque-list'>
-                                  {items.map((it, j) => (
-                                    <li key={j}>{renderEjercicioItem(it, b.type)}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                fallback && (
-                                  <ul className='bloque-list'>
-                                    <li>{fallback}</li>
-                                  </ul>
-                                )
-                              )}
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div key={i} className='bloque-card'>
-                            {header && <p className='bloque-header'>{header}</p>}
-                            {items.length > 0 && (
-                              <ul className='bloque-list'>
-                                {items.map((it, j) => (
-                                  <li key={j}>{renderEjercicioItem(it, b.type)}</li>
-                                ))}
-                              </ul>
-                            )}
-
-                            {b.type === 'TABATA' && (b?.cantSeries || b?.tiempoTrabajoDescansoTabata || b?.descTabata) && (
-                              <p className='bloque-footnote'>
-                                {b?.descTabata ? <><b>Pausa entre series:</b> {b.descTabata}</> : null}
-                              </p>
-                            )}
-
-                            {b.type === 'ROUNDS' && b?.descansoRonda != null && (
-                              <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {renderBloques(dias[0]?.bloques)}
                     </div>
                   ) : (
                     <div className='rutina-dias-accordion'>
@@ -447,62 +468,7 @@ const RutinasRecomendadas = () => {
                               <div className='accordion-content'>
                                 {d.descripcion && <p className='dia-desc'>{d.descripcion}</p>}
 
-                                {(d.bloques || []).map((b, i) => {
-                                  const items = getBloqueItems(b);
-                                  const header = blockLabel(b);
-
-                                  if (b.type === 'SETS_REPS') {
-                                    if (isDropSetBlock(b)) {
-                                      return <React.Fragment key={i}>{renderDropSetBlock(b)}</React.Fragment>;
-                                    }
-
-                                    const fallback = items.length === 0 ? setsRepsFallback(b) : null;
-                                    return (
-                                      <div key={i} className='bloque-card'>
-                                        {(items.length > 0) ? (
-                                          <ul className='bloque-list'>
-                                            {items.map((it, j) => (
-                                              <li key={j}>{renderEjercicioItem(it, b.type)}</li>
-                                            ))}
-                                          </ul>
-                                        ) : (
-                                          fallback && (
-                                            <ul className='bloque-list'>
-                                              <li>{fallback}</li>
-                                            </ul>
-                                          )
-                                        )}
-                                      </div>
-                                    );
-                                  }
-
-                                  return (
-                                    <div key={i} className='bloque-card'>
-                                      {header && <p className='bloque-header'>{header}</p>}
-                                      {items.length > 0 && (
-                                        <ul className='bloque-list'>
-                                          {items.map((it, j) => (
-                                            <li key={j}>{renderEjercicioItem(it, b.type)}</li>
-                                          ))}
-                                        </ul>
-                                      )}
-
-                                      {b.type === 'TABATA' && (b?.cantSeries || b?.tiempoTrabajoDescansoTabata || b?.descTabata) && (
-                                        <p className='bloque-footnote'>
-                                          {b?.cantSeries ? <><b>Series:</b> {b.cantSeries} · </> : null}
-                                          {b?.tiempoTrabajoDescansoTabata
-                                            ? <><b>Trabajo/Descanso:</b> {formatWorkRest(b.tiempoTrabajoDescansoTabata)} · </>
-                                            : null}
-                                          {b?.descTabata ? <><b>Pausa entre series:</b> {b.descTabata}</> : null}
-                                        </p>
-                                      )}
-
-                                      {b.type === 'ROUNDS' && b?.descansoRonda != null && (
-                                        <p className='bloque-footnote'>Descanso: {b.descansoRonda}s</p>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                                {renderBloques(d.bloques)}
                               </div>
                             )}
                           </div>
