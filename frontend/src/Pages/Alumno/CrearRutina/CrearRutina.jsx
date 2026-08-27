@@ -2245,7 +2245,7 @@ const CrearRutina = ({ fromAdmin, fromEntrenador, fromAlumno }) => {
                         <input
                           type="text"
                           className="block-titulo-input"
-                          placeholder="Título del bloque (opcional). Ej: RONDA FULL BODY WARM UP"
+                          placeholder="Título del bloque (opcional)"
                           value={block.data.titulo || ''}
                           onChange={e =>
                             handleBlockFieldChange(
