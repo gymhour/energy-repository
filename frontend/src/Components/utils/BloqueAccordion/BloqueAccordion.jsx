@@ -14,7 +14,6 @@ import './bloqueAccordion.css';
 const BloqueAccordion = ({
     titulo,
     header,
-    cantidad = 0,
     defaultOpen = false,
     className = '',
     children
@@ -45,11 +44,6 @@ const BloqueAccordion = ({
                 </div>
 
                 <div className='bloque-trigger-meta'>
-                    {cantidad > 0 && (
-                        <span className='bloque-count'>
-                            {cantidad} {cantidad === 1 ? 'ejercicio' : 'ejercicios'}
-                        </span>
-                    )}
                     {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 </div>
             </div>

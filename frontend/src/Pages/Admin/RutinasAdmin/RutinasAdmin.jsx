@@ -134,7 +134,6 @@ const renderBloques = (bloques) => {
           key={i}
           titulo={b.titulo}
           header='Series y repeticiones'
-          cantidad={items.length}
         >
           {(items.length > 0)
             ? <ul className='bloque-list'>{items.map((it, j) => <li key={j}>{renderEjercicioItem(it, b.type)}</li>)}</ul>
@@ -149,7 +148,6 @@ const renderBloques = (bloques) => {
         key={i}
         titulo={b.titulo}
         header={header}
-        cantidad={items.length}
       >
         {items.length > 0 && (
           <ul className='bloque-list'>

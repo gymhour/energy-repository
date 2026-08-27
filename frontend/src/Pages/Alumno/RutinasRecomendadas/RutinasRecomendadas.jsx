@@ -198,7 +198,6 @@ const renderDropSetBlock = (b) => {
     <BloqueAccordion
       titulo={b.titulo}
       header={<>DROPSET — {titleNode}</>}
-      cantidad={items.length}
       className="dropset-card"
     >
       <ul className="bloque-list dropset-list">
@@ -227,7 +226,6 @@ const renderBloques = (bloques) => {
           key={i}
           titulo={b.titulo}
           header='Series y repeticiones'
-          cantidad={items.length}
         >
           {(items.length > 0) ? (
             <ul className='bloque-list'>
@@ -251,7 +249,6 @@ const renderBloques = (bloques) => {
         key={i}
         titulo={b.titulo}
         header={header}
-        cantidad={items.length}
       >
         {items.length > 0 && (
           <ul className='bloque-list'>

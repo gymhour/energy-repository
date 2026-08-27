@@ -56,8 +56,8 @@
     /* Soporte legacy */
     padding: 20px;
     width: 320px;
-    min-width: 320px;
-    max-width: 320px;
+    min-width: 340px;
+    max-width: 340px;
     border-radius: 8px;
     background-color: var(--background-color-distinct);
     height: 100%;
@@ -122,7 +122,7 @@
 }
 
 .rutina-data {
-    padding: 12px 0px;
+    padding: 12px 0 4px;
     font-size: 20px;
     text-transform: uppercase;
     font-family: 'BebasNewu', Arial, Helvetica, sans-serif;
@@ -215,14 +215,15 @@
 }
 
 .accordion-content {
-    padding: 10px 16px 14px 16px;
+    padding: 12px 12px 14px;
     border-top: 1px dashed var(--border-color);
 }
 
 .dia-desc {
-    margin: 2px 0 10px;
+    margin: 2px 0 12px;
     color: var(--text-color-distinct);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 /* Título libre que el entrenador le pone al bloque */
@@ -284,7 +285,13 @@
 
 /* Sección directa (sin desplegable) */
 .rutina-dia {
-    margin-top: 10px;
+    margin-top: 16px;
+}
+
+.rutina-dia > h4 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
 }
 
 .rutina-ver-detalle-btn {
