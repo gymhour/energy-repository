@@ -212,13 +212,17 @@
 }
 
 .acciones-cell {
+  position: relative;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.cuotas-actions-row {
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
   gap: 4px;
   flex-wrap: nowrap;
-  position: relative;
-  overflow: visible;
 }
 
 .cuotas-actions-menu {
@@ -1041,8 +1045,11 @@
 
   /* Acciones más respiradas */
   .acciones-cell {
-    gap: 8px;
     padding-top: 4px;
+  }
+
+  .cuotas-actions-row {
+    gap: 8px;
   }
 
   .cuotas-truncated-text,

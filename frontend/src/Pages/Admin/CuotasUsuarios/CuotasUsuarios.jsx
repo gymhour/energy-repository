@@ -1278,56 +1278,58 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                     <td data-label="Forma de Pago"><TruncatedText>{c.formaPago || '–'}</TruncatedText></td>
                     <td data-label="Fecha Pago">{formatDate(c.fechaPago)}</td>
                     <td data-label="Acciones" className="acciones-cell">
-                      <button
-                        className="accion-button pay"
-                        onClick={() => openConfirmation('pay', c)}
-                        disabled={c.pagada}
-                        aria-label={`Pagar cuota ${c.ID_Cuota}`}
-                        title="Pagar"
-                      >
-                        Pagar
-                      </button>
-                      <div className={`cuotas-actions-menu ${openActionsId === c.ID_Cuota ? 'is-open' : ''}`}>
+                      <div className="cuotas-actions-row">
                         <button
-                          type="button"
-                          className="accion-button cuotas-actions-trigger"
-                          onClick={() => setOpenActionsId(current => current === c.ID_Cuota ? null : c.ID_Cuota)}
-                          aria-expanded={openActionsId === c.ID_Cuota}
-                          aria-controls={`cuota-actions-${c.ID_Cuota}`}
-                          aria-label={`Más acciones para cuota ${c.ID_Cuota}`}
+                          className="accion-button pay"
+                          onClick={() => openConfirmation('pay', c)}
+                          disabled={c.pagada}
+                          aria-label={`Pagar cuota ${c.ID_Cuota}`}
+                          title="Pagar"
                         >
-                          <MoreHorizontal size={18} />
-                          Más
+                          Pagar
                         </button>
-                        {openActionsId === c.ID_Cuota && (
-                          <div id={`cuota-actions-${c.ID_Cuota}`} className="cuotas-actions-dropdown">
-                            {!c.pagada && (
+                        <div className={`cuotas-actions-menu ${openActionsId === c.ID_Cuota ? 'is-open' : ''}`}>
+                          <button
+                            type="button"
+                            className="accion-button cuotas-actions-trigger"
+                            onClick={() => setOpenActionsId(current => current === c.ID_Cuota ? null : c.ID_Cuota)}
+                            aria-expanded={openActionsId === c.ID_Cuota}
+                            aria-controls={`cuota-actions-${c.ID_Cuota}`}
+                            aria-label={`Más acciones para cuota ${c.ID_Cuota}`}
+                          >
+                            <MoreHorizontal size={18} />
+                            Más
+                          </button>
+                          {openActionsId === c.ID_Cuota && (
+                            <div id={`cuota-actions-${c.ID_Cuota}`} className="cuotas-actions-dropdown">
+                              {!c.pagada && (
+                                <button
+                                  type="button"
+                                  className="cuotas-dropdown-action"
+                                  onClick={() => { setOpenActionsId(null); openEditModal(c); }}
+                                >
+                                  <Pencil size={16} /> Editar importe
+                                </button>
+                              )}
+                              {!c.pagada && c.mora?.dias > 0 && (
+                                <button
+                                  type="button"
+                                  className="cuotas-dropdown-action"
+                                  onClick={() => { setOpenActionsId(null); openMoraOverride(c); }}
+                                >
+                                  <Settings size={16} /> Configurar interés
+                                </button>
+                              )}
                               <button
                                 type="button"
-                                className="cuotas-dropdown-action"
-                                onClick={() => { setOpenActionsId(null); openEditModal(c); }}
+                                className="cuotas-dropdown-action is-danger"
+                                onClick={() => { setOpenActionsId(null); openConfirmation('delete', c); }}
                               >
-                                <Pencil size={16} /> Editar importe
+                                <Trash2 size={16} /> Eliminar cuota
                               </button>
-                            )}
-                            {!c.pagada && c.mora?.dias > 0 && (
-                              <button
-                                type="button"
-                                className="cuotas-dropdown-action"
-                                onClick={() => { setOpenActionsId(null); openMoraOverride(c); }}
-                              >
-                                <Settings size={16} /> Configurar interés
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              className="cuotas-dropdown-action is-danger"
-                              onClick={() => { setOpenActionsId(null); openConfirmation('delete', c); }}
-                            >
-                              <Trash2 size={16} /> Eliminar cuota
-                            </button>
-                          </div>
-                        )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
