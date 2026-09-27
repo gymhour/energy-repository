@@ -5,6 +5,7 @@ import prismaC from "../models/Cuota.js";
 import prismaU from "../models/User.js";
 import { getChurnRiskReport } from '../services/churnRisk.service.js';
 import { sendRetencionEmail } from '../services/email.service.js';
+import { enrichCuotasWithMora, getMoraDays } from '../services/mora.service.js';
 
 // Helper: "YYYY-MM" desde los componentes UTC de una fecha (igual criterio que Gasto/Cuota).
 const monthKeyUTC = (d: Date): string =>
@@ -35,44 +36,39 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
         ]);
 
         // 4) Suma de importes de cuotas pagadas y pendientes en el mes actual
-        const [paidSum, pendingSum] = await Promise.all([
-            prismaC.aggregate({
-                where: { mes: monthStr, pagada: true },
-                _sum: { importe: true }
-            }),
-            prismaC.aggregate({
-                where: { mes: monthStr, pagada: false },
-                _sum: { importe: true }
-            })
+        const [paidRows, pendingRows] = await Promise.all([
+            prismaC.findMany({ where: { mes: monthStr, pagada: true } }),
+            prismaC.findMany({ where: { mes: monthStr, pagada: false } }),
         ]);
+        const pendingRowsWithMora = await enrichCuotasWithMora(pendingRows);
 
         // 5) Histórico mensual de importes pagados
-        const monthlySums = await prismaC.groupBy({
-            by: ['mes'],
-            where: { pagada: true },
-            _sum: { importe: true },
-            orderBy: { mes: 'asc' }
-        });
-
-        const monthlyPaidAmounts = monthlySums.map(entry => ({
-            mes: entry.mes,
-            totalPagado: entry._sum.importe ?? 0
-        }));
+        const allPaidRows = await prismaC.findMany({ where: { pagada: true }, orderBy: { mes: 'asc' } });
+        const paidByMonth = new Map<string, { totalPagado: number; intereses: number }>();
+        for (const cuota of allPaidRows) {
+            const current = paidByMonth.get(cuota.mes) ?? { totalPagado: 0, intereses: 0 };
+            current.totalPagado += Number(cuota.totalPagado ?? cuota.importe);
+            current.intereses += Number(cuota.interesMoraPagado ?? 0);
+            paidByMonth.set(cuota.mes, current);
+        }
+        const monthlyPaidAmounts = Array.from(paidByMonth.entries()).map(([mes, values]) => ({ mes, ...values }));
 
         // -----------------------------
         // Cuotas vencidas (por flag `vencida: true`)
         // -----------------------------
-        const [overdueCount, overdueSumAgg] = await Promise.all([
-            prismaC.count({ where: { vencida: true } }),
-            prismaC.aggregate({ where: { vencida: true }, _sum: { importe: true } })
-        ]);
-        const overdueAmount = overdueSumAgg._sum.importe ?? 0;
+        const unpaidRows = await prismaC.findMany({ where: { pagada: false } });
+        const overdueRows = unpaidRows.filter(cuota => getMoraDays(cuota.vence, now) > 0);
+        const overdueWithMora = await enrichCuotasWithMora(overdueRows);
+        const overdueCount = overdueWithMora.length;
+        const overdueAmount = overdueWithMora.reduce((sum, cuota) => sum + cuota.mora.total, 0);
+        const interesMoraAcumulado = overdueWithMora.reduce((sum, cuota) => sum + cuota.mora.interes, 0);
 
         // -----------------------------
         // FINANZAS: gastos, ganancia neta, tasa de cobranza
         // -----------------------------
-        const ingresosMes = paidSum._sum.importe ?? 0;
-        const pendienteMes = pendingSum._sum.importe ?? 0;
+        const ingresosMes = paidRows.reduce((sum, cuota) => sum + Number(cuota.totalPagado ?? cuota.importe), 0);
+        const interesesCobradosMes = paidRows.reduce((sum, cuota) => sum + Number(cuota.interesMoraPagado ?? 0), 0);
+        const pendienteMes = pendingRowsWithMora.reduce((sum, cuota) => sum + cuota.mora.total, 0);
 
         const [gastosMesAgg, gastosByMes] = await Promise.all([
             prisma.gasto.aggregate({ where: { mes: monthStr }, _sum: { monto: true } }),
@@ -170,6 +166,8 @@ export const getDashboardStats = async (req: Request, res: Response): Promise<vo
                 totalAmountPendingThisMonth: pendienteMes,
                 quotasOverdue: overdueCount,
                 totalAmountOverdue: overdueAmount,
+                interesesCobradosMes,
+                interesMoraAcumulado,
                 // Finanzas
                 gastosMes,
                 gananciaNetaMes,

@@ -125,7 +125,9 @@ const Cuotas = () => {
               <thead>
                 <tr>
                   <th>Mes</th>
-                  <th>Importe</th>
+                  <th>Importe original</th>
+                  <th>Interés</th>
+                  <th>Total</th>
                   <th>Vence</th>
                   <th>Plan</th>
                   <th>Estado</th>
@@ -139,9 +141,18 @@ const Cuotas = () => {
                     <td data-label="Mes" style={{ textTransform: 'uppercase' }}>
                       {formatMonth(c.mes)}
                     </td>
-                    <td data-label="Importe" className="col-importe">
+                    <td data-label="Importe original" className="col-importe">
                       {formatCurrency(c.importe)}
                     </td>
+                    <td data-label="Interés" className="col-importe">
+                      {formatCurrency(c.mora?.interes ?? 0)}
+                      {c.mora?.dias > 0 && (
+                        <small className="cuotas-mora-alumno">
+                          {c.mora.dias} día(s) · {c.mora.tasaDiaria}% diario · {c.mora.estadoTasa === 'EXENTA' ? 'Exenta' : c.mora.estadoTasa === 'PERSONALIZADA' ? 'Tasa personalizada' : c.mora.estadoTasa === 'GLOBAL' ? 'Tasa global' : 'Sin interés configurado'}
+                        </small>
+                      )}
+                    </td>
+                    <td data-label="Total" className="col-importe"><strong>{formatCurrency(c.mora?.total ?? c.importe)}</strong></td>
                     <td data-label="Vence" className="col-vence">
                       {formatDate(c.vence)}
                     </td>

@@ -19,6 +19,19 @@ import {
   resolveSlots,
 } from '../services/accessRules.service.js';
 import { runSerializableTransaction } from '../services/transaction.service.js';
+import {
+  MORA_CONFIG_ID,
+  MORA_SCOPE,
+  buildMoraView,
+  calculateMora,
+  enrichCuotasWithMora,
+  ensureCuotaMoraAssigned,
+  getMoraConfig,
+  getMoraDays,
+  getMoraStart,
+  syncOverdueCuotas,
+  validateMoraRate,
+} from '../services/mora.service.js';
 
 type CuotaReturn = {
   ID_Cuota: number;
@@ -173,7 +186,10 @@ const buildCuotaPaymentData = (
   requestedImporte: number,
   formaPago: string | null = null,
   paidAt: Date = getArgentinaDate(),
-): Pick<Prisma.CuotaCreateManyInput, "importe" | "pagada" | "vencida" | "formaPago" | "fechaPago"> => {
+): Pick<Prisma.CuotaCreateManyInput,
+  "importe" | "pagada" | "vencida" | "formaPago" | "fechaPago" |
+  "interesMoraPagado" | "totalPagado" | "diasMoraAlPagar" | "tasaMoraAplicadaPago"
+> => {
   if (isFreePlan(plan)) {
     return {
       importe: 0,
@@ -181,6 +197,10 @@ const buildCuotaPaymentData = (
       vencida: false,
       formaPago: FREE_PLAN_PAYMENT_METHOD,
       fechaPago: paidAt,
+      interesMoraPagado: 0,
+      totalPagado: 0,
+      diasMoraAlPagar: 0,
+      tasaMoraAplicadaPago: 0,
     };
   }
 
@@ -190,6 +210,10 @@ const buildCuotaPaymentData = (
     vencida: false,
     formaPago: formaPago || null,
     fechaPago: null,
+    interesMoraPagado: null,
+    totalPagado: null,
+    diasMoraAlPagar: null,
+    tasaMoraAplicadaPago: null,
   };
 };
 
@@ -1567,6 +1591,7 @@ const regenerateTurnosFijosByUsuario = async (req: Request, res: Response): Prom
 
 export const getAllCuotas = async (req: Request, res: Response): Promise<void> => {
   try {
+    await syncOverdueCuotas();
     const {
       page = '1',
       email,
@@ -1664,6 +1689,13 @@ export const getAllCuotas = async (req: Request, res: Response): Promise<void> =
           vencida: true,
           formaPago: true,
           fechaPago: true,
+          moraTasaDiariaBase: true,
+          moraTasaDiariaOverride: true,
+          moraFechaInicio: true,
+          interesMoraPagado: true,
+          totalPagado: true,
+          diasMoraAlPagar: true,
+          tasaMoraAplicadaPago: true,
           ID_Usuario: true,
           User: {
             select: {
@@ -1689,9 +1721,11 @@ export const getAllCuotas = async (req: Request, res: Response): Promise<void> =
 
     const totalPages = Math.ceil(totalCuotas / take);
 
+    const cuotasConMora = await enrichCuotasWithMora(cuotas);
+
     res.status(200).json({
       meta: { totalItems: totalCuotas, take, page: pageNumber, totalPages },
-      data: cuotas
+      data: cuotasConMora
     });
   } catch (error: any) {
     console.error('Error al obtener las cuotas paginadas:', error);
@@ -1721,6 +1755,13 @@ export const getAllCuotasByUsuario = async (req: Request, res: Response): Promis
         vencida: true,
         formaPago: true,
         fechaPago: true,
+        moraTasaDiariaBase: true,
+        moraTasaDiariaOverride: true,
+        moraFechaInicio: true,
+        interesMoraPagado: true,
+        totalPagado: true,
+        diasMoraAlPagar: true,
+        tasaMoraAplicadaPago: true,
         ID_Usuario: true,
         User: {
           select: {
@@ -1742,7 +1783,7 @@ export const getAllCuotasByUsuario = async (req: Request, res: Response): Promis
       }
     });
 
-    res.status(200).json(cuotas);
+    res.status(200).json(await enrichCuotasWithMora(cuotas));
   } catch (error: any) {
     console.error('Error al obtener las cuotas por usuario:', error);
     res.status(500).json({ message: 'Error al obtener las cuotas por usuario', error: error.message });
@@ -1988,21 +2029,173 @@ const payCuota = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const updatedCuota = await prismaC.update({
-      where: { ID_Cuota: cuotaId },
-      data: {
-        pagada: true,
-        vencida: false,
-        fechaPago: new Date(),
-        formaPago
-      },
-      include: { User: { select: { ID_Usuario: true, email: true, nombre: true, apellido: true } } }
+    const paidAt = new Date();
+    const updatedCuota = await runSerializableTransaction(async tx => {
+      const found = await tx.cuota.findUnique({ where: { ID_Cuota: cuotaId } });
+      if (!found) throw new CuotaPaymentError(404, 'Cuota no encontrada');
+      if (found.pagada) throw new CuotaPaymentError(409, 'La cuota ya se encuentra pagada');
+
+      const assigned = await ensureCuotaMoraAssigned(found, tx, paidAt);
+      const tasa = Number(assigned.moraTasaDiariaOverride ?? assigned.moraTasaDiariaBase ?? 0);
+      const mora = calculateMora({ importe: assigned.importe, vence: assigned.vence, tasaDiaria: tasa, calculationDate: paidAt });
+
+      return tx.cuota.update({
+        where: { ID_Cuota: cuotaId },
+        data: {
+          pagada: true,
+          vencida: false,
+          fechaPago: paidAt,
+          formaPago,
+          interesMoraPagado: mora.interes,
+          totalPagado: mora.total,
+          diasMoraAlPagar: mora.dias,
+          tasaMoraAplicadaPago: tasa,
+        },
+        include: { User: { select: { ID_Usuario: true, email: true, nombre: true, apellido: true } } },
+      });
     });
 
-    res.status(200).json({ message: 'Cuota pagada exitosamente', cuota: updatedCuota });
+    res.status(200).json({
+      message: 'Cuota pagada exitosamente',
+      cuota: { ...updatedCuota, mora: buildMoraView(updatedCuota, paidAt) },
+    });
   } catch (error: any) {
+    if (error instanceof CuotaPaymentError) {
+      res.status(error.status).json({ message: error.message });
+      return;
+    }
     console.error('Error al pagar cuota:', error);
     res.status(500).json({ message: 'Error al actualizar la cuota', error: error.message });
+  }
+};
+
+class CuotaPaymentError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+  }
+}
+
+export const getMoraConfiguracion = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    res.status(200).json(await getMoraConfig());
+  } catch (error: any) {
+    res.status(500).json({ message: 'No se pudo obtener la configuración de mora', error: error.message });
+  }
+};
+
+export const updateMoraConfiguracion = async (req: Request, res: Response): Promise<void> => {
+  const tasaDiaria = validateMoraRate(req.body?.tasaDiaria);
+  const alcance = String(req.body?.alcance || '');
+  if (tasaDiaria === null) {
+    res.status(400).json({ message: 'La tasa debe estar entre 0 y 100 y tener hasta cuatro decimales' });
+    return;
+  }
+  if (![MORA_SCOPE.FUTURAS, MORA_SCOPE.TODAS_VENCIDAS].includes(alcance as any)) {
+    res.status(400).json({ message: 'Alcance inválido. Usá FUTURAS o TODAS_VENCIDAS' });
+    return;
+  }
+
+  try {
+    const now = new Date();
+    const result = await runSerializableTransaction(async tx => {
+      const previous = await getMoraConfig(tx);
+      const config = await tx.moraConfiguracion.upsert({
+        where: { id: MORA_CONFIG_ID },
+        create: { id: MORA_CONFIG_ID, tasaDiaria, vigenteDesde: now, updatedBy: req.user?.ID_Usuario },
+        update: { tasaDiaria, vigenteDesde: now, updatedBy: req.user?.ID_Usuario },
+      });
+      await tx.moraHistorial.create({
+        data: {
+          tipo: 'CONFIG_GLOBAL',
+          alcance,
+          tasaAnterior: previous.tasaDiaria,
+          tasaNueva: tasaDiaria,
+          actorId: req.user?.ID_Usuario,
+          fecha: now,
+        },
+      });
+
+      let cuotasActualizadas = 0;
+      if (alcance === MORA_SCOPE.TODAS_VENCIDAS) {
+        const candidatas = await tx.cuota.findMany({
+          where: { pagada: false, moraTasaDiariaOverride: null },
+        });
+        const vencidas = candidatas.filter(cuota => getMoraDays(cuota.vence, now) > 0);
+        for (const cuota of vencidas) {
+          await tx.cuota.update({
+            where: { ID_Cuota: cuota.ID_Cuota },
+            data: {
+              vencida: true,
+              moraFechaInicio: cuota.moraFechaInicio ?? getMoraStart(cuota.vence),
+              moraTasaDiariaBase: tasaDiaria,
+            },
+          });
+        }
+        cuotasActualizadas = vencidas.length;
+      }
+      return { config, cuotasActualizadas };
+    });
+    res.status(200).json(result);
+  } catch (error: any) {
+    res.status(500).json({ message: 'No se pudo actualizar la configuración de mora', error: error.message });
+  }
+};
+
+export const updateCuotaMora = async (req: Request, res: Response): Promise<void> => {
+  const cuotaId = Number(req.params.id);
+  const restoring = req.body?.tasaDiaria === null;
+  const tasaDiaria = restoring ? null : validateMoraRate(req.body?.tasaDiaria);
+  if (!Number.isInteger(cuotaId) || cuotaId < 1 || (!restoring && tasaDiaria === null)) {
+    res.status(400).json({ message: 'Cuota o tasa de mora inválida' });
+    return;
+  }
+
+  try {
+    const now = new Date();
+    const updated = await runSerializableTransaction(async tx => {
+      const cuota = await tx.cuota.findUnique({ where: { ID_Cuota: cuotaId } });
+      if (!cuota) throw new CuotaPaymentError(404, 'Cuota no encontrada');
+      if (cuota.pagada) throw new CuotaPaymentError(409, 'No se puede modificar la mora de una cuota pagada');
+      if (getMoraDays(cuota.vence, now) === 0) throw new CuotaPaymentError(409, 'Solo se puede modificar una cuota vencida');
+      const assigned = await ensureCuotaMoraAssigned(cuota, tx, now);
+      const previousRate = Number(assigned.moraTasaDiariaOverride ?? assigned.moraTasaDiariaBase);
+      const result = await tx.cuota.update({
+        where: { ID_Cuota: cuotaId },
+        data: { moraTasaDiariaOverride: tasaDiaria },
+      });
+      await tx.moraHistorial.create({
+        data: {
+          ID_Cuota: cuotaId,
+          tipo: restoring ? 'RESTAURAR' : tasaDiaria === 0 ? 'EXENCION' : 'TASA_PERSONALIZADA',
+          tasaAnterior: previousRate,
+          tasaNueva: restoring ? result.moraTasaDiariaBase : tasaDiaria,
+          actorId: req.user?.ID_Usuario,
+          fecha: now,
+        },
+      });
+      return result;
+    });
+    res.status(200).json({ cuota: { ...updated, mora: buildMoraView(updated, now) } });
+  } catch (error: any) {
+    if (error instanceof CuotaPaymentError) {
+      res.status(error.status).json({ message: error.message });
+      return;
+    }
+    res.status(500).json({ message: 'No se pudo actualizar la mora de la cuota', error: error.message });
+  }
+};
+
+export const getMoraHistorial = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const cuotaId = req.query.cuotaId ? Number(req.query.cuotaId) : undefined;
+    const historial = await prisma.moraHistorial.findMany({
+      where: Number.isInteger(cuotaId) ? { ID_Cuota: cuotaId } : {},
+      orderBy: { fecha: 'desc' },
+      take: 100,
+    });
+    res.status(200).json(historial);
+  } catch (error: any) {
+    res.status(500).json({ message: 'No se pudo obtener el historial de mora', error: error.message });
   }
 };
 
@@ -2093,19 +2286,21 @@ export const getCuotasVencenPronto = async (req: Request, res: Response): Promis
     const porVencer: any[] = [];
 
     for (const c of cuotasPendientes) {
-      const venceDate = new Date(c.vence);
+      const cuotaConMora = await ensureCuotaMoraAssigned(c, prisma, now);
+      const venceDate = new Date(cuotaConMora.vence);
       const venceDayUTC = Date.UTC(venceDate.getUTCFullYear(), venceDate.getUTCMonth(), venceDate.getUTCDate());
       const daysLeft = Math.floor((venceDayUTC - startOfTodayUTC) / MS_PER_DAY);
 
       // Ignorar pagadas (ya filtradas por query), clasificar según daysLeft
       const common = {
-        ID_Cuota: c.ID_Cuota,
-        mes: c.mes,
-        importe: c.importe,
+        ID_Cuota: cuotaConMora.ID_Cuota,
+        mes: cuotaConMora.mes,
+        importe: cuotaConMora.importe,
         vence: venceDate.toISOString(),
         daysLeft,
-        pagada: c.pagada,
-        formaPago: c.formaPago ?? null
+        pagada: cuotaConMora.pagada,
+        formaPago: cuotaConMora.formaPago ?? null,
+        mora: buildMoraView(cuotaConMora, now),
       };
 
       if (daysLeft < 0) {
@@ -2178,5 +2373,9 @@ export const cuotaMethods = {
   eliminarCuotasByMesLote,
   updateCuota,
   payCuota,
+  getMoraConfiguracion,
+  updateMoraConfiguracion,
+  updateCuotaMora,
+  getMoraHistorial,
   getCuotasVencenPronto,
 };

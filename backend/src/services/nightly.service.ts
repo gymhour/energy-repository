@@ -1,5 +1,6 @@
 import prisma from "../models/Prisma.js";
 import { sendBirthdayEmail } from "./email.service.js";
+import { syncOverdueCuotas } from "./mora.service.js";
 
 const TIMEZONE = process.env.TIMEZONE || "America/Argentina/Cordoba";
 
@@ -14,12 +15,7 @@ function getMonthDayFromDate(d: Date, timeZone = TIMEZONE) {
 
 // Marca como vencidas las cuotas impagas cuyo vencimiento ya pasó.
 export async function checkVencidas(): Promise<number> {
-  const ahora = new Date();
-  const { count } = await prisma.cuota.updateMany({
-    where: { vence: { lt: ahora }, pagada: false, vencida: false },
-    data: { vencida: true },
-  });
-  return count;
+  return syncOverdueCuotas(new Date());
 }
 
 // Marca AUSENTE los turnos ACTIVOS pasados sin asistencia.

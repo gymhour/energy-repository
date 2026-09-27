@@ -27,6 +27,14 @@
     margin-top: 20px;
 }
 
+.cuotas-mora-alumno {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-color-distinct);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
 .copy-button {
     background-color: transparent;
     border: none;
