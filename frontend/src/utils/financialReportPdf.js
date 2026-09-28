@@ -72,6 +72,8 @@ export async function generateFinancialReportPdf({ kpi, periodoLabel, aclaracion
       head: [['Finanzas (mes corriente)', '']],
       body: [
         ['Ingresos', `${fmtMoney(kpi.totalAmountPaidThisMonth)} (${kpi.quotasPaidThisMonth})`],
+        ['Intereses cobrados', fmtMoney(kpi.interesesCobradosMes)],
+        ['Interés de mora acumulado', fmtMoney(kpi.interesMoraAcumulado)],
         ['Gastos', fmtMoney(kpi.gastosMes)],
         ['Ganancia neta', fmtMoney(kpi.gananciaNetaMes)],
         ['Por cobrar', `${fmtMoney(kpi.totalAmountPendingThisMonth)} (${kpi.quotasPendingThisMonth})`],

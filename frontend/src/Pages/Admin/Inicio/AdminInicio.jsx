@@ -43,6 +43,8 @@ const AdminInicio = () => {
     totalAmountPendingThisMonth: 0,
     quotasOverdue: 0,
     totalAmountOverdue: 0,
+    interesesCobradosMes: 0,
+    interesMoraAcumulado: 0,
     gastosMes: 0,
     gananciaNetaMes: 0,
     tasaCobranzaMes: 0,
@@ -256,6 +258,22 @@ const AdminInicio = () => {
               <span className="admin-kpi-count">({kpi.quotasPaidThisMonth})</span>
             </p>
           </button>
+
+          <div className='admin-kpi-card'>
+            <div className='admin-kpi-card-header'>
+              <Percent size={20} className="icon-soft-grey" />
+              <h3>Intereses cobrados</h3>
+            </div>
+            <p className='value'>{currencyFormatter(kpi.interesesCobradosMes)}</p>
+          </div>
+
+          <div className='admin-kpi-card'>
+            <div className='admin-kpi-card-header'>
+              <Clock size={20} className="icon-soft-grey" />
+              <h3>Interés en mora <span className="month-label">(acumulado)</span></h3>
+            </div>
+            <p className='value'>{currencyFormatter(kpi.interesMoraAcumulado)}</p>
+          </div>
 
           <div className='admin-kpi-card'>
             <div className='admin-kpi-card-header'>

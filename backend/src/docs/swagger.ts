@@ -910,6 +910,39 @@ export const swaggerDocument = {
         }
       }
     },
+    "/cuotas/mora/configuracion": {
+      "get": {
+        "tags": ["Cuotas"],
+        "summary": "Consultar la tasa diaria global de mora",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Configuración vigente." } }
+      },
+      "put": {
+        "tags": ["Cuotas"],
+        "summary": "Modificar la tasa global de mora",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object",
+            "required": ["tasaDiaria", "alcance"],
+            "properties": {
+              "tasaDiaria": { "type": "number", "minimum": 0, "maximum": 100, "example": 0.5 },
+              "alcance": { "type": "string", "enum": ["FUTURAS", "TODAS_VENCIDAS"] }
+            }
+          } } }
+        },
+        "responses": { "200": { "description": "Configuración actualizada." } }
+      }
+    },
+    "/cuotas/mora/historial": {
+      "get": {
+        "tags": ["Cuotas"],
+        "summary": "Consultar el historial auditable de cambios de mora",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Últimos 100 cambios." } }
+      }
+    },
     "/cuotas/usuario/{idUsuario}": {
       "post": {
         "tags": ["Cuotas"],
@@ -1070,6 +1103,29 @@ export const swaggerDocument = {
         },
         "responses": {
           "200": { "description": "Pago registrado con éxito y cuota marcada como pagada." }
+        }
+      }
+    },
+    "/cuotas/{id}/mora": {
+      "put": {
+        "tags": ["Cuotas"],
+        "summary": "Definir, eximir o restaurar la tasa de una cuota vencida",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object",
+            "properties": {
+              "tasaDiaria": { "type": "number", "nullable": true, "minimum": 0, "maximum": 100, "example": 0.25 }
+            }
+          } } }
+        },
+        "responses": {
+          "200": { "description": "Tasa de la cuota actualizada." },
+          "409": { "description": "La cuota está pagada o todavía no venció." }
         }
       }
     },

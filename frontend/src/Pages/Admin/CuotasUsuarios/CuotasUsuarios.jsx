@@ -12,7 +12,7 @@ import LoaderFullScreen from '../../../Components/utils/LoaderFullScreen/LoaderF
 import ReactDatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import SecondaryButton from '../../../Components/utils/SecondaryButton/SecondaryButton';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Pencil, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, History, MoreHorizontal, Pencil, Settings, SlidersHorizontal, Trash2, X } from 'lucide-react';
 import apiService from '../../../services/apiService';
 import { toast } from 'react-toastify';
 import Select from 'react-select';
@@ -82,6 +82,31 @@ const getCuotasFiltersFromSearch = (searchParams) => ({
   mesDate: parseMesDateParam(searchParams.get('mes')),
 });
 
+const TruncatedText = ({ children, className = '' }) => {
+  const [expanded, setExpanded] = useState(false);
+  const text = children === null || children === undefined || children === '' ? '–' : String(children);
+  const toggle = () => setExpanded(value => !value);
+
+  return (
+    <span
+      className={`cuotas-truncated-text ${expanded ? 'is-expanded' : ''} ${className}`.trim()}
+      title={text}
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      onClick={toggle}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggle();
+        }
+      }}
+    >
+      {text}
+    </span>
+  );
+};
+
 // Tamaño de lote para la generación masiva: cada request crea las cuotas+turnos de N alumnos.
 // 25 mantiene cada request corta (sin riesgo de timeout en Vercel) y da progreso fluido.
 const BULK_CHUNK_SIZE = 25;
@@ -131,6 +156,16 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editImporte, setEditImporte] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [moraConfig, setMoraConfig] = useState(null);
+  const [showMoraConfigModal, setShowMoraConfigModal] = useState(false);
+  const [moraConfigRate, setMoraConfigRate] = useState('0');
+  const [moraScope, setMoraScope] = useState('FUTURAS');
+  const [savingMora, setSavingMora] = useState(false);
+  const [showMoraModal, setShowMoraModal] = useState(false);
+  const [moraOverrideRate, setMoraOverrideRate] = useState('');
+  const [showMoraHistory, setShowMoraHistory] = useState(false);
+  const [moraHistory, setMoraHistory] = useState([]);
+  const [openActionsId, setOpenActionsId] = useState(null);
 
   // — Estados del formulario “Nueva cuota” —
   const [selectedUserOpt, setSelectedUserOpt] = useState(null);
@@ -304,7 +339,90 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
 
   useEffect(() => {
     fetchPlanes();
+    loadMoraConfig();
   }, []);
+
+  useEffect(() => {
+    if (openActionsId === null) return undefined;
+    const closeOnOutsideClick = event => {
+      if (!event.target.closest('.cuotas-actions-menu')) setOpenActionsId(null);
+    };
+    const closeOnEscape = event => {
+      if (event.key === 'Escape') setOpenActionsId(null);
+    };
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [openActionsId]);
+
+  const loadMoraConfig = async () => {
+    try {
+      const response = await apiClient.get('/cuotas/mora/configuracion');
+      setMoraConfig(response.data);
+      setMoraConfigRate(String(response.data?.tasaDiaria ?? 0));
+    } catch (err) {
+      console.error('Error cargando configuración de mora:', err);
+    }
+  };
+
+  const openMoraHistory = async () => {
+    try {
+      const response = await apiClient.get('/cuotas/mora/historial');
+      setMoraHistory(Array.isArray(response.data) ? response.data : []);
+      setShowMoraHistory(true);
+    } catch (err) {
+      toast.error('No se pudo cargar el historial de mora.');
+    }
+  };
+
+  const saveMoraConfig = async (event) => {
+    event.preventDefault();
+    setSavingMora(true);
+    try {
+      const response = await apiClient.put('/cuotas/mora/configuracion', {
+        tasaDiaria: moraConfigRate,
+        alcance: moraScope,
+      });
+      setMoraConfig(response.data.config);
+      setShowMoraConfigModal(false);
+      toast.success(`Tasa diaria actualizada. ${response.data.cuotasActualizadas || 0} cuota(s) vencida(s) recalculadas.`);
+      fetchCuotas();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'No se pudo actualizar la tasa de mora.');
+    } finally {
+      setSavingMora(false);
+    }
+  };
+
+  const openMoraOverride = (cuota) => {
+    setSelectedCuota(cuota);
+    setMoraOverrideRate(cuota?.mora?.esExcepcion ? String(cuota.mora.tasaDiaria) : '');
+    setShowMoraModal(true);
+  };
+
+  const closeMoraOverride = () => {
+    setShowMoraModal(false);
+    setSelectedCuota(null);
+    setMoraOverrideRate('');
+  };
+
+  const saveMoraOverride = async (value) => {
+    if (!selectedCuota) return;
+    setSavingMora(true);
+    try {
+      await apiClient.put(`/cuotas/${selectedCuota.ID_Cuota}/mora`, { tasaDiaria: value });
+      toast.success(value === null ? 'Se restauró la tasa global.' : Number(value) === 0 ? 'Cuota eximida de interés.' : 'Tasa personalizada aplicada.');
+      closeMoraOverride();
+      fetchCuotas();
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'No se pudo actualizar la mora.');
+    } finally {
+      setSavingMora(false);
+    }
+  };
 
   useEffect(() => {
     setInputEmail('');
@@ -567,7 +685,7 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
       if (actionType === 'pay') {
         await apiClient.put(`/cuotas/${selectedCuota.ID_Cuota}/pay`, { formaPago });
         toast.success(
-          `Cuota pagada: cuota #${selectedCuota.ID_Cuota} por ${formatCurrency(selectedCuota.importe)} · ${formaPago}`
+          `Cuota pagada: cuota #${selectedCuota.ID_Cuota} por ${formatCurrency(selectedCuota.mora?.total ?? selectedCuota.importe)} · ${formaPago}`
         );
       } else if (actionType === 'delete') {
         await apiClient.delete(`/cuotas/${selectedCuota.ID_Cuota}`);
@@ -975,6 +1093,12 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
         <div className="header-actions cuotas-usuarios" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h2>Cuotas de Usuarios</h2>
           <div className='generate-cuotas-btns'>
+            <button type="button" className="secondary-button" onClick={() => setShowMoraConfigModal(true)}>
+              <Settings size={18} /> Mora: {moraConfig?.tasaDiaria ?? 0}% diario
+            </button>
+            <button type="button" className="secondary-button" onClick={openMoraHistory}>
+              <History size={18} /> Historial de mora
+            </button>
             <SecondaryButton text="Cuota manual" onClick={() => setShowModal(true)} />
             <PrimaryButton text="Generar cuotas de este mes" onClick={() => setShowBulkModal(true)} />
             <button
@@ -1098,7 +1222,9 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                   <th>Usuario</th>
                   <th title="Mes de la cuota y días que cubre el plan">Mes</th>
                   <th title="Manual: alta individual, proporcional al mes. Masiva: generación del mes, período completo del plan">Creación</th>
-                  <th>Importe</th>
+                  <th>Importe original</th>
+                  <th>Interés</th>
+                  <th>Total</th>
                   <th title="Último día que tiene el alumno para pagar">Vence</th>
                   <th>Plan</th>
                   <th>Estado</th>
@@ -1109,12 +1235,12 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
               </thead>
               <tbody>
                 {cuotas.map(c => (
-                  <tr key={c.ID_Cuota}>
+                  <tr key={c.ID_Cuota} className={openActionsId === c.ID_Cuota ? 'has-open-actions' : ''}>
                     <td data-label="Usuario">
-                      {c.User ? `${c.User.nombre} ${c.User.apellido}` : '–'}
+                      <TruncatedText>{c.User ? `${c.User.nombre || ''} ${c.User.apellido || ''}`.trim() : '–'}</TruncatedText>
                     </td>
                     <td data-label="Mes" className='cuotas-usuario-mes-col'>
-                      <span className="cuotas-mes-nombre">{formatMonth(c.mes)}</span>
+                      <TruncatedText className="cuotas-mes-nombre">{formatMonth(c.mes)}</TruncatedText>
                       {formatVigencia(c) && (
                         <span className="cuotas-mes-vigencia" title="Días que la cuota cubre el plan">
                           ({formatVigencia(c)})
@@ -1130,9 +1256,18 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                         <span className="cuotas-origen-desconocido" title="Cuota anterior al registro del origen">–</span>
                       )}
                     </td>
-                    <td data-label="Importe">{formatCurrency(c.importe)}</td>
+                    <td data-label="Importe original">{formatCurrency(c.importe)}</td>
+                    <td data-label="Interés">
+                      {formatCurrency(c.mora?.interes ?? 0)}
+                      {c.mora?.dias > 0 && (
+                        <TruncatedText className="cuotas-mora-detail">
+                          {c.mora.dias} día(s) · {c.mora.tasaDiaria}% · {c.mora.estadoTasa === 'EXENTA' ? 'Exenta' : c.mora.estadoTasa === 'PERSONALIZADA' ? 'Personalizada' : c.mora.estadoTasa === 'GLOBAL' ? 'Global' : 'Sin interés'}
+                        </TruncatedText>
+                      )}
+                    </td>
+                    <td data-label="Total"><strong>{formatCurrency(c.mora?.total ?? c.importe)}</strong></td>
                     <td data-label="Vence">{formatDate(c.vence)}</td>
-                    <td data-label="Plan">{c.planNombreSnapshot ?? '–'}</td>
+                    <td data-label="Plan"><TruncatedText>{c.planNombreSnapshot ?? '–'}</TruncatedText></td>
                     <td data-label="Estado">
                       <span
                         className={`badge ${c.vencida ? 'expired' : c.pagada ? 'paid' : 'pending'}`}
@@ -1140,37 +1275,62 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
                         {c.vencida ? 'Vencida' : c.pagada ? 'Pagada' : 'Pendiente'}
                       </span>
                     </td>
-                    <td data-label="Forma de Pago">{c.formaPago ? c.formaPago : '-'}</td>
+                    <td data-label="Forma de Pago"><TruncatedText>{c.formaPago || '–'}</TruncatedText></td>
                     <td data-label="Fecha Pago">{formatDate(c.fechaPago)}</td>
                     <td data-label="Acciones" className="acciones-cell">
-                      {!c.pagada && (
+                      <div className="cuotas-actions-row">
                         <button
-                          className="accion-button edit"
-                          onClick={() => openEditModal(c)}
-                          aria-label={`Editar importe de cuota ${c.ID_Cuota}`}
-                          title="Editar importe"
+                          className="accion-button pay"
+                          onClick={() => openConfirmation('pay', c)}
+                          disabled={c.pagada}
+                          aria-label={`Pagar cuota ${c.ID_Cuota}`}
+                          title="Pagar"
                         >
-                          <Pencil size={16} />
-                          Editar
+                          Pagar
                         </button>
-                      )}
-                      <button
-                        className="accion-button pay"
-                        onClick={() => openConfirmation('pay', c)}
-                        disabled={c.pagada}
-                        aria-label={`Pagar cuota ${c.ID_Cuota}`}
-                        title="Pagar"
-                      >
-                        Pagar
-                      </button>
-                      <button
-                        className="accion-button delete"
-                        onClick={() => openConfirmation('delete', c)}
-                        aria-label={`Eliminar cuota ${c.ID_Cuota}`}
-                        title="Eliminar"
-                      >
-                        Eliminar
-                      </button>
+                        <div className={`cuotas-actions-menu ${openActionsId === c.ID_Cuota ? 'is-open' : ''}`}>
+                          <button
+                            type="button"
+                            className="accion-button cuotas-actions-trigger"
+                            onClick={() => setOpenActionsId(current => current === c.ID_Cuota ? null : c.ID_Cuota)}
+                            aria-expanded={openActionsId === c.ID_Cuota}
+                            aria-controls={`cuota-actions-${c.ID_Cuota}`}
+                            aria-label={`Más acciones para cuota ${c.ID_Cuota}`}
+                          >
+                            <MoreHorizontal size={18} />
+                            Más
+                          </button>
+                          {openActionsId === c.ID_Cuota && (
+                            <div id={`cuota-actions-${c.ID_Cuota}`} className="cuotas-actions-dropdown">
+                              {!c.pagada && (
+                                <button
+                                  type="button"
+                                  className="cuotas-dropdown-action"
+                                  onClick={() => { setOpenActionsId(null); openEditModal(c); }}
+                                >
+                                  <Pencil size={16} /> Editar importe
+                                </button>
+                              )}
+                              {!c.pagada && c.mora?.dias > 0 && (
+                                <button
+                                  type="button"
+                                  className="cuotas-dropdown-action"
+                                  onClick={() => { setOpenActionsId(null); openMoraOverride(c); }}
+                                >
+                                  <Settings size={16} /> Configurar interés
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="cuotas-dropdown-action is-danger"
+                                onClick={() => { setOpenActionsId(null); openConfirmation('delete', c); }}
+                              >
+                                <Trash2 size={16} /> Eliminar cuota
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1499,6 +1659,79 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
         </div>
       )}
 
+      {showMoraConfigModal && (
+        <div className="cuotas-modal-overlay" role="presentation" onMouseDown={e => e.target === e.currentTarget && setShowMoraConfigModal(false)}>
+          <div className="cuotas-modal cuotas-modal-small" role="dialog" aria-modal="true">
+            <form onSubmit={saveMoraConfig} className="modal-form">
+              <div className="cuotas-modal-header">
+                <div><h3>Configuración de mora</h3><span>Interés simple por cada día calendario posterior al vencimiento.</span></div>
+                <button type="button" className="cuotas-modal-close" onClick={() => setShowMoraConfigModal(false)}><X size={18} /></button>
+              </div>
+              <div className="cuotas-modal-grid">
+                <div className="cuotas-modal-field cuotas-modal-field-wide">
+                  <label>Tasa diaria (%)</label>
+                  <CustomInput type="number" min="0" max="100" step="0.0001" value={moraConfigRate} onChange={e => setMoraConfigRate(e.target.value)} required width="100%" />
+                </div>
+                <div className="cuotas-modal-field cuotas-modal-field-wide">
+                  <label>Aplicar el cambio a</label>
+                  <CustomDropdown
+                    value={moraScope === 'FUTURAS' ? 'Solo nuevas moras' : 'Todas las vencidas sin excepción'}
+                    options={['Solo nuevas moras', 'Todas las vencidas sin excepción']}
+                    onChange={e => setMoraScope(e.target.value === 'Solo nuevas moras' ? 'FUTURAS' : 'TODAS_VENCIDAS')}
+                  />
+                </div>
+                <div className="cuotas-modal-note cuotas-modal-field-wide">Las tasas personalizadas y exenciones existentes se conservarán.</div>
+              </div>
+              <div className="cuotas-modal-actions">
+                <button type="button" className="cuotas-modal-secondary-button" onClick={() => setShowMoraConfigModal(false)}>Cancelar</button>
+                <button type="submit" className="cuotas-modal-primary-button" disabled={savingMora}>{savingMora ? 'Guardando…' : 'Guardar tasa'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showMoraModal && selectedCuota && (
+        <div className="cuotas-modal-overlay" role="presentation" onMouseDown={e => e.target === e.currentTarget && closeMoraOverride()}>
+          <div className="cuotas-modal cuotas-modal-small" role="dialog" aria-modal="true">
+            <div className="cuotas-modal-header">
+              <div><h3>Interés de la cuota #{selectedCuota.ID_Cuota}</h3><span>{selectedCuota.mora?.dias} día(s) de mora · total actual {formatCurrency(selectedCuota.mora?.total)}</span></div>
+              <button type="button" className="cuotas-modal-close" onClick={closeMoraOverride}><X size={18} /></button>
+            </div>
+            <div className="cuotas-modal-grid">
+              <div className="cuotas-modal-field cuotas-modal-field-wide">
+                <label>Tasa diaria personalizada (%)</label>
+                <CustomInput type="number" min="0" max="100" step="0.0001" value={moraOverrideRate} onChange={e => setMoraOverrideRate(e.target.value)} placeholder={String(selectedCuota.moraTasaDiariaBase ?? 0)} width="100%" />
+              </div>
+            </div>
+            <div className="cuotas-modal-actions cuotas-mora-actions">
+              <button type="button" className="cuotas-modal-secondary-button" onClick={() => saveMoraOverride(null)} disabled={savingMora}>Usar tasa global</button>
+              <button type="button" className="cuotas-modal-secondary-button" onClick={() => saveMoraOverride(0)} disabled={savingMora}>Eximir (0%)</button>
+              <button type="button" className="cuotas-modal-primary-button" onClick={() => saveMoraOverride(moraOverrideRate)} disabled={savingMora || moraOverrideRate === ''}>Aplicar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMoraHistory && (
+        <div className="cuotas-modal-overlay" role="presentation" onMouseDown={e => e.target === e.currentTarget && setShowMoraHistory(false)}>
+          <div className="cuotas-modal" role="dialog" aria-modal="true">
+            <div className="cuotas-modal-header">
+              <div><h3>Historial de mora</h3><span>Últimos 100 cambios globales y por cuota.</span></div>
+              <button type="button" className="cuotas-modal-close" onClick={() => setShowMoraHistory(false)}><X size={18} /></button>
+            </div>
+            <div className="cuotas-history-list">
+              {moraHistory.length === 0 ? <p>No hay cambios registrados.</p> : moraHistory.map(item => (
+                <div key={item.id} className="cuotas-history-item">
+                  <strong>{item.tipo.replaceAll('_', ' ')}</strong>
+                  <span>{formatDate(item.fecha)} · {item.ID_Cuota ? `Cuota #${item.ID_Cuota}` : item.alcance || 'Global'} · {item.tasaAnterior ?? 0}% → {item.tasaNueva ?? 0}% · Usuario #{item.actorId ?? '–'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* — Popup confirmar — */}
       <ConfirmationPopup
         isOpen={popupOpen}
@@ -1513,14 +1746,21 @@ const CuotasUsuarios = ({fromAdmin, fromEntrenador}) => {
         }
       >
         {actionType === 'pay' && (
-          <div className='form-input-ctn' style={{ margin: '1rem 0' }}>
-            <label htmlFor="formaPago">Forma de pago</label>
-            <CustomDropdown
-              id="formaPago"
-              value={formaPago}
-              onChange={e => setFormaPago(e.target.value)}
-              options={["Efectivo", "Tarjeta de crédito", "Tarjeta de débito", "Transferencia"]}
-            />
+          <div style={{ margin: '1rem 0' }}>
+            <div className="cuotas-payment-breakdown">
+              <span>Importe original <strong>{formatCurrency(selectedCuota?.importe ?? 0)}</strong></span>
+              <span>Interés ({selectedCuota?.mora?.dias ?? 0} días) <strong>{formatCurrency(selectedCuota?.mora?.interes ?? 0)}</strong></span>
+              <span>Total a cobrar <strong>{formatCurrency(selectedCuota?.mora?.total ?? selectedCuota?.importe ?? 0)}</strong></span>
+            </div>
+            <div className='form-input-ctn'>
+              <label htmlFor="formaPago">Forma de pago</label>
+              <CustomDropdown
+                id="formaPago"
+                value={formaPago}
+                onChange={e => setFormaPago(e.target.value)}
+                options={["Efectivo", "Tarjeta de crédito", "Tarjeta de débito", "Transferencia"]}
+              />
+            </div>
           </div>
         )}
       </ConfirmationPopup>

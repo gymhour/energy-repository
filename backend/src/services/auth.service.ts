@@ -85,7 +85,7 @@ export function isSelfOrStaff(req: Request, res: Response, next: NextFunction): 
     res.status(401).json({ error: 'No autorizado' });
     return;
   }
-  const targetId = Number.parseInt(req.params.id, 10);
+  const targetId = Number.parseInt(req.params.id ?? req.params.idUsuario, 10);
   const tipo = String(user.tipo ?? '').toLowerCase();
   const esStaff = tipo === ROLES.ADMIN || tipo === ROLES.ENTRENADOR || tipo === ROLES.RECEPCION;
   if (!esStaff && user.ID_Usuario !== targetId) {

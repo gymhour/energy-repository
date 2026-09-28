@@ -3,22 +3,36 @@
 /* Contenedor para scroll horizontal en viewports chicos */
 .table-responsive {
   width: 100%;
-  overflow-x: auto;
+  overflow: visible;
   /* -webkit-overflow-scrolling: touch; */
 }
 
 /* Tabla base */
 .cuotas-table {
   width: 100%;
+  min-width: 0;
   border-collapse: collapse;
-  /* table-layout: fixed; */
+  table-layout: fixed;
 }
+
+.cuotas-table th:nth-child(1) { width: 9%; }
+.cuotas-table th:nth-child(2) { width: 10%; }
+.cuotas-table th:nth-child(3) { width: 6%; }
+.cuotas-table th:nth-child(4) { width: 8.5%; }
+.cuotas-table th:nth-child(5) { width: 8%; }
+.cuotas-table th:nth-child(6) { width: 9%; }
+.cuotas-table th:nth-child(7) { width: 7.5%; }
+.cuotas-table th:nth-child(8) { width: 7%; }
+.cuotas-table th:nth-child(9) { width: 8%; }
+.cuotas-table th:nth-child(10) { width: 8%; }
+.cuotas-table th:nth-child(11) { width: 7.5%; }
+.cuotas-table th:nth-child(12) { width: 11.5%; }
 
 .cuotas-table th,
 .cuotas-table td {
-  padding: 18px 6px;
+  padding: 14px 4px;
   text-align: left;
-  font-size: 14px;
+  font-size: 12px;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -27,9 +41,97 @@
   font-weight: 400;
 }
 
+.cuotas-table td:not(.acciones-cell) {
+  overflow: hidden;
+}
+
+.cuotas-table tr.has-open-actions {
+  position: relative;
+  z-index: 50;
+}
+
 /* Título de la columna Acciones centrado (Cuotas y Salidas de dinero) */
 .cuotas-table th:last-child {
   text-align: center;
+}
+
+.cuotas-mora-detail {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-color-distinct);
+  font-size: 0.75rem;
+  max-width: 155px;
+}
+
+.cuotas-truncated-text {
+  display: block;
+  max-width: 125px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+  border-radius: 3px;
+}
+
+.cuotas-truncated-text:hover,
+.cuotas-truncated-text:focus-visible {
+  color: var(--primary-color);
+  outline: none;
+}
+
+.cuotas-truncated-text:focus-visible {
+  box-shadow: 0 0 0 2px var(--background-hover-color);
+}
+
+.cuotas-truncated-text.is-expanded {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: zoom-out;
+}
+
+.cuotas-payment-breakdown {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color-distinct);
+}
+
+.cuotas-payment-breakdown span {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.cuotas-mora-actions {
+  flex-wrap: wrap;
+}
+
+.cuotas-history-list {
+  display: grid;
+  gap: 10px;
+  max-height: 55vh;
+  overflow-y: auto;
+  margin-top: 18px;
+}
+
+.cuotas-history-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--background-color-distinct);
+}
+
+.cuotas-history-item span {
+  color: var(--text-color-distinct);
+  font-size: 0.85rem;
 }
 
 /* .cuotas-table th,
@@ -57,13 +159,13 @@
 .badge {
   padding: 4px 8px;
   border-radius: 12px;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 500;
   text-align: center;
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  min-width: 85px;
+  min-width: 60px;
 }
 
 .badge.paid {
@@ -110,10 +212,81 @@
 }
 
 .acciones-cell {
+  position: relative;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.cuotas-actions-row {
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.cuotas-actions-menu {
+  display: block;
+  position: relative;
+}
+
+.cuotas-actions-menu.is-open {
+  z-index: 100;
+}
+
+.cuotas-actions-trigger {
+  min-width: 58px;
+}
+
+.cuotas-actions-dropdown {
+  display: grid;
+  width: 174px;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 100;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: var(--background-color);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
+}
+
+.cuotas-dropdown-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 0;
+  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cuotas-dropdown-action:last-child {
+  border-bottom: 0;
+}
+
+.cuotas-dropdown-action:hover,
+.cuotas-dropdown-action:focus-visible {
+  background: var(--background-hover-color);
+  color: var(--primary-color);
+  outline: none;
+}
+
+.cuotas-dropdown-action.is-danger {
+  color: #e5484d;
+}
+
+.cuotas-dropdown-action.is-danger:hover,
+.cuotas-dropdown-action.is-danger:focus-visible {
+  background: rgba(229, 72, 77, 0.12);
+  color: #e5484d;
 }
 
 /* Botones de tabla (estilo similar a la sección de Usuarios) */
@@ -123,13 +296,13 @@
   justify-content: center;
   gap: 5px;
   min-height: 32px;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border-radius: 7px;
   border: 1px solid var(--border-color);
   outline: none;
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-color);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -814,8 +987,13 @@
   }
 }
 
-/* 2) Card view debajo de 700px */
-@media (max-width: 700px) {
+/* 2) Card view cuando las 12 columnas ya no entran con buena legibilidad. */
+@media (max-width: 1050px) {
+  .cuotas-table {
+    min-width: 0;
+    table-layout: auto;
+  }
+
   .cuotas-table thead {
     position: absolute;
     top: -9999px;
@@ -837,7 +1015,7 @@
     margin: 0 0 12px;
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    overflow: hidden;
+    overflow: visible;
     background: var(--background-color-distinct);
   }
 
@@ -867,8 +1045,20 @@
 
   /* Acciones más respiradas */
   .acciones-cell {
-    gap: 8px;
     padding-top: 4px;
+  }
+
+  .cuotas-actions-row {
+    gap: 8px;
+  }
+
+  .cuotas-truncated-text,
+  .cuotas-mora-detail {
+    max-width: 100%;
+  }
+
+  .cuotas-actions-dropdown {
+    width: min(174px, 52vw);
   }
 
   /* Botones de paginación touch-friendly */

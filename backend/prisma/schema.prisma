@@ -74,6 +74,13 @@ model Cuota {
   formaPago                  String?
   fechaPago                  DateTime? // Fecha en que se realizó el pago, opcional
   vencida                    Boolean      @default(false)
+  moraTasaDiariaBase         Float        @default(0)
+  moraTasaDiariaOverride     Float?
+  moraFechaInicio            DateTime?
+  interesMoraPagado          Float?
+  totalPagado                Float?
+  diasMoraAlPagar            Int?
+  tasaMoraAplicadaPago       Float?
   // Cómo se creó la cuota: "MANUAL" (alta individual, proporcional al mes) o
   // "MASIVA" (generación del mes, período completo del plan). Null en las anteriores
   // a este campo, donde el origen no quedó registrado.
@@ -90,10 +97,37 @@ model Cuota {
   Plan                       Plan?        @relation(fields: [ID_Plan], references: [ID_Plan])
   Turnos                     Turno[]
   Asistencias                Asistencia[]
+  MoraHistorial              MoraHistorial[]
 
   @@index([mes])
   @@index([ID_Usuario, mes])
   @@map("Cuota")
+}
+
+model MoraConfiguracion {
+  id            Int      @id @default(1)
+  tasaDiaria    Float    @default(0)
+  vigenteDesde DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  updatedBy     Int?
+
+  @@map("MoraConfiguracion")
+}
+
+model MoraHistorial {
+  id           Int      @id @default(autoincrement())
+  ID_Cuota     Int?
+  tipo         String
+  alcance      String?
+  tasaAnterior Float?
+  tasaNueva    Float?
+  actorId      Int?
+  fecha        DateTime @default(now())
+  Cuota        Cuota?   @relation(fields: [ID_Cuota], references: [ID_Cuota], onDelete: SetNull)
+
+  @@index([ID_Cuota, fecha])
+  @@index([fecha])
+  @@map("MoraHistorial")
 }
 
 model Gasto {
